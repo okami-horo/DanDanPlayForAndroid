@@ -8,6 +8,7 @@
 *.iws
 *.iml
 *.jks
+*.jks.base64
 dadanplay.jks
 keystore.properties
 .cursor/
