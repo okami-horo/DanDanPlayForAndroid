@@ -23,11 +23,9 @@ jobs:
           distribution: adopt
 
       # 3.获取签名密钥
-      - name: decrypt key
+      - name: setup keystore
         run: |
-          gpg --quiet --batch --yes --decrypt \
-          --passphrase=${{ secrets.KEY_PASSPHRASE }} \
-          --output gradle/assemble/dandanplay.jks gradle/assemble/dandanplay.jks.gpg
+          echo "${{ secrets.KEYSTORE_FILE }}" | base64 --decode > gradle/assemble/dandanplay.jks
 
       # 4.配置构建类型
       - name: setup build type
@@ -68,7 +66,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           name: 弹弹play概念版 v${{ env.BUILD_VERSION }}
-          tag_name: ${{ env.VERSION_TAG }}
+          tag_name: ${{ env.BUILD_TAG }}
           body_path: change/dandanplay-v${{ env.BUILD_VERSION }}.txt
           prerelease: false
           files: |
@@ -87,20 +85,3 @@ jobs:
           echo 'DOWNLOAD_LINKS<<EOF' >> $GITHUB_ENV
           cat download_link.txt | sed 's/ /\\n/g' >> $GITHUB_ENV
           echo 'EOF' >> $GITHUB_ENV
-
-      # 11.推送打包消息到钉钉
-      - name: push package message
-        if: steps.generate_release.outputs.assets
-        uses: ghostoy/dingtalk-action@master
-        with:
-          webhook: ${{ secrets.DINGTALK_WEBHOOK}}
-          secret: ${{ secrets.DINGTALK_SECRET }}
-          msgtype: text
-          content: |
-            {
-              "content": "打包版本：v${{ env.BUILD_VERSION }}\n下载链接：\n${{ env.DOWNLOAD_LINKS }}\n"
-            }
-          at: |
-            {
-              "isAtAll": true
-            }

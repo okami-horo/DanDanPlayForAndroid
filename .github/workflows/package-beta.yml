@@ -4,7 +4,7 @@ name: package beta
 on:
   push:
     branches:
-      - master
+      - develop
 
 jobs:
   package:
@@ -23,11 +23,9 @@ jobs:
           distribution: adopt
 
       # 3.获取签名密钥
-      - name: decrypt key
+      - name: setup keystore
         run: |
-          gpg --quiet --batch --yes --decrypt \
-          --passphrase=${{ secrets.KEY_PASSPHRASE }} \
-          --output gradle/assemble/dandanplay.jks gradle/assemble/dandanplay.jks.gpg
+          echo "${{ secrets.KEYSTORE_FILE }}" | base64 --decode > gradle/assemble/dandanplay.jks
 
       # 4.配置构建类型
       - name: setup build type
