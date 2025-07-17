@@ -27,22 +27,49 @@ inline fun <T> Sequence<T>.filterHiddenFile(predicate: (T) -> String): MutableCo
 /**
  * 从当前位置寻找上一个T类型的Item
  * @param currentIndex 当前位置
+ * @param allowLoop 是否允许循环到列表另一端，默认false防止焦点突然跳转
  */
-inline fun <reified T> List<*>.previousItemIndex(currentIndex: Int): Int {
-    return findIndexOnLeft(currentIndex, loop = true) {
+inline fun <reified T> List<*>.previousItemIndex(currentIndex: Int, allowLoop: Boolean = false): Int {
+    return findIndexOnLeft(currentIndex, loop = allowLoop) {
         it is T
     }
 }
 
-
 /**
  * 从当前位置寻找下一个T类型的Item
  * @param currentIndex 当前位置
+ * @param allowLoop 是否允许循环到列表另一端，默认false防止焦点突然跳转
  */
-inline fun <reified T> List<*>.nextItemIndex(currentIndex: Int): Int {
-    return findIndexOnRight(currentIndex, loop = true) {
+inline fun <reified T> List<*>.nextItemIndex(currentIndex: Int, allowLoop: Boolean = false): Int {
+    return findIndexOnRight(currentIndex, loop = allowLoop) {
         it is T
     }
+}
+
+/**
+ * 安全的上一个Item查找，优先查找相邻项目
+ */
+inline fun <reified T> List<*>.previousItemIndexSafe(currentIndex: Int): Int {
+    // 首先尝试不循环查找
+    val index = findIndexOnLeft(currentIndex, loop = false) { it is T }
+    if (index != -1) {
+        return index
+    }
+    // 如果没找到，返回当前位置（保持焦点不变）
+    return currentIndex
+}
+
+/**
+ * 安全的下一个Item查找，优先查找相邻项目
+ */
+inline fun <reified T> List<*>.nextItemIndexSafe(currentIndex: Int): Int {
+    // 首先尝试不循环查找
+    val index = findIndexOnRight(currentIndex, loop = false) { it is T }
+    if (index != -1) {
+        return index
+    }
+    // 如果没找到，返回当前位置（保持焦点不变）
+    return currentIndex
 }
 
 

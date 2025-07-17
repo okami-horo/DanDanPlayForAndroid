@@ -1,32 +1,12 @@
 {
-  "kotlin": {
-    "languageServer": {
-      "enabled": true,
-      "path": "",
-      "transport": "stdio"
-    },
-    "compiler": {
-      "jvm": {
-        "target": "1.8"
-      }
-    },
-    "linting": {
-      "run": "onSave"
-    },
-    "completion": {
-      "snippets": {
-        "enabled": true
-      }
-    },
-    "debugAdapter": {
-      "enabled": true,
-      "path": ""
-    },
-    "inlayHints": {
-      "enabled": true,
-      "typeHints": true,
-      "parameterHints": true,
-      "chainingHints": true
-    }
-  }
+    "kotlin.languageServer.enabled": true,
+    "kotlin.languageServer.path": "",
+    "kotlin.compiler.jvm.target": "1.8",
+    "kotlin.linting.run": "onSave",
+    "kotlin.completion.snippets.enabled": true,
+    "kotlin.debugAdapter.enabled": true,
+    "kotlin.inlayHints.enabled": true,
+    "kotlin.inlayHints.typeHints": true,
+    "kotlin.inlayHints.parameterHints": true,
+    "kotlin.inlayHints.chainingHints": true
 }

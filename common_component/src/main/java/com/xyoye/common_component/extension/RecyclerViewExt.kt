@@ -45,19 +45,73 @@ fun RecyclerView.setData(items: List<Any>) {
 }
 
 fun RecyclerView.requestIndexChildFocus(index: Int): Boolean {
-    scrollToPosition(index)
+    // 边界检查
+    val adapter = adapter ?: return false
+    if (index < 0 || index >= adapter.itemCount) {
+        return false
+    }
+
+    // 保存当前焦点状态
+    val currentFocusedPosition = getCurrentFocusedPosition()
+
+    // 平滑滚动到目标位置
+    smoothScrollToPosition(index)
 
     val targetTag = R.string.focusable_item.toResString()
     val indexView = layoutManager?.findViewByPosition(index)
     if (indexView != null) {
-        indexView.findViewWithTag<View>(targetTag)?.requestFocus()
-        return true
+        val focusableView = indexView.findViewWithTag<View>(targetTag)
+        if (focusableView != null && focusableView.isFocusable) {
+            focusableView.requestFocus()
+            return true
+        }
     }
 
-    post {
-        layoutManager?.findViewByPosition(index)
-            ?.findViewWithTag<View>(targetTag)
-            ?.requestFocus()
+    // 使用重试机制确保焦点设置成功
+    var retryCount = 0
+    val maxRetries = 3
+
+    fun tryRequestFocus() {
+        if (retryCount >= maxRetries) {
+            // 如果多次重试失败，恢复到之前的焦点位置
+            if (currentFocusedPosition != -1 && currentFocusedPosition != index) {
+                post { requestIndexChildFocus(currentFocusedPosition) }
+            }
+            return
+        }
+
+        retryCount++
+        post {
+            val view = layoutManager?.findViewByPosition(index)
+            val focusableView = view?.findViewWithTag<View>(targetTag)
+            if (focusableView != null && focusableView.isFocusable) {
+                focusableView.requestFocus()
+            } else {
+                // 继续重试
+                tryRequestFocus()
+            }
+        }
     }
+
+    tryRequestFocus()
     return true
+}
+
+/**
+ * 获取当前获得焦点的item位置
+ */
+fun RecyclerView.getCurrentFocusedPosition(): Int {
+    val focusedChild = focusedChild ?: return -1
+    return getChildAdapterPosition(focusedChild)
+}
+
+/**
+ * 安全的焦点请求，带有边界检查和状态验证
+ */
+fun RecyclerView.requestIndexChildFocusSafe(index: Int, fallbackIndex: Int = -1): Boolean {
+    val success = requestIndexChildFocus(index)
+    if (!success && fallbackIndex != -1 && fallbackIndex != index) {
+        return requestIndexChildFocus(fallbackIndex)
+    }
+    return success
 }

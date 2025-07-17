@@ -3,6 +3,7 @@ package com.xyoye.player.controller.base
 import android.content.Context
 import android.util.AttributeSet
 import android.view.KeyEvent
+import com.xyoye.common_component.utils.tv.TvKeyEventHelper
 import com.xyoye.player.controller.video.InterGestureView
 
 /**
@@ -19,6 +20,12 @@ abstract class TvVideoController(
         if (isPopupMode()) {
             return false
         }
+
+        // 检查是否为TV端按键
+        if (!TvKeyEventHelper.isTvDirectionKey(keyCode) && !TvKeyEventHelper.isTvConfirmKey(keyCode)) {
+            return mControlWrapper.onKeyDown(keyCode, event)
+        }
+
         val intercept = when (keyCode) {
             KeyEvent.KEYCODE_DPAD_CENTER -> onActionCenter()
             KeyEvent.KEYCODE_DPAD_UP -> onActionUp()

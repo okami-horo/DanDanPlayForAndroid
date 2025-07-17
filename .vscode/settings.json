@@ -30,6 +30,17 @@
   // Android 相关配置
   "android.home": "/opt/android-sdk",
   "gradle.nestedProjects": true,
+  // 添加生成的源码路径
+  "java.project.sourcePaths": [
+    "*/src/main/java",
+    "*/src/main/kotlin",
+    "*/build/generated/source/kapt/debug",
+    "*/build/generated/data_binding_base_class_source_out/debug/out"
+  ],
+  // Gradle 配置
+  "java.import.gradle.enabled": true,
+  "java.import.gradle.wrapper.enabled": true,
+  "java.import.gradle.offline.enabled": false,
   // 文件关联
   "files.associations": {
     "*.kt": "kotlin",

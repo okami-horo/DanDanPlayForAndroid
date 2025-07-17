@@ -7,9 +7,10 @@ import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import com.xyoye.common_component.adapter.addItem
 import com.xyoye.common_component.adapter.buildAdapter
-import com.xyoye.common_component.extension.nextItemIndex
-import com.xyoye.common_component.extension.previousItemIndex
-import com.xyoye.common_component.extension.requestIndexChildFocus
+import com.xyoye.common_component.extension.nextItemIndexSafe
+import com.xyoye.common_component.extension.previousItemIndexSafe
+import com.xyoye.common_component.extension.requestIndexChildFocusSafe
+import com.xyoye.common_component.utils.tv.TvKeyEventHelper
 import com.xyoye.common_component.extension.setData
 import com.xyoye.common_component.extension.vertical
 import com.xyoye.common_component.utils.dp2px
@@ -150,30 +151,27 @@ class SettingTracksView @JvmOverloads constructor(
      * 处理KeyCode事件
      */
     private fun handleKeyCode(keyCode: Int): Boolean {
-        //已取得焦点的Item
-        val focusedChild = viewBinding.rvTrack.focusedChild
-            ?: return false
-        val focusedChildIndex = viewBinding.rvTrack.getChildAdapterPosition(focusedChild)
-        if (focusedChildIndex == -1) {
-            return false
-        }
-        val targetIndex = getTargetIndexByKeyCode(keyCode, focusedChildIndex)
-        viewBinding.rvTrack.requestIndexChildFocus(targetIndex)
-        return true
+        // 使用新的TV按键事件处理器
+        return TvKeyEventHelper.handleRecyclerViewKeyEvent<VideoTrackBean>(
+            viewBinding.rvTrack,
+            keyCode,
+            tracks
+        )
     }
 
     /**
      * 根据KeyCode与当前焦点位置，取得目标焦点位置
+     * @deprecated 使用TvKeyEventHelper.handleRecyclerViewKeyEvent替代
      */
     private fun getTargetIndexByKeyCode(keyCode: Int, focusedIndex: Int): Int {
         return when (keyCode) {
             //左、上规则
             KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_UP -> {
-                tracks.previousItemIndex<VideoTrackBean>(focusedIndex)
+                tracks.previousItemIndexSafe<VideoTrackBean>(focusedIndex)
             }
             //右、下规则
             KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_DPAD_DOWN -> {
-                tracks.nextItemIndex<VideoTrackBean>(focusedIndex)
+                tracks.nextItemIndexSafe<VideoTrackBean>(focusedIndex)
             }
 
             else -> {

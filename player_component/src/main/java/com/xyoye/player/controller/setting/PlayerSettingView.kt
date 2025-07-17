@@ -8,9 +8,10 @@ import com.xyoye.common_component.adapter.addItem
 import com.xyoye.common_component.adapter.buildAdapter
 import com.xyoye.common_component.config.PlayerConfig
 import com.xyoye.common_component.extension.grid
-import com.xyoye.common_component.extension.nextItemIndex
-import com.xyoye.common_component.extension.previousItemIndex
-import com.xyoye.common_component.extension.requestIndexChildFocus
+import com.xyoye.common_component.extension.nextItemIndexSafe
+import com.xyoye.common_component.extension.previousItemIndexSafe
+import com.xyoye.common_component.extension.requestIndexChildFocusSafe
+import com.xyoye.common_component.utils.tv.TvKeyEventHelper
 import com.xyoye.common_component.extension.setData
 import com.xyoye.common_component.utils.dp2px
 import com.xyoye.common_component.utils.view.ItemDecorationSpace
@@ -127,29 +128,27 @@ class PlayerSettingView(
      * 处理KeyCode事件
      */
     private fun handleKeyCode(keyCode: Int): Boolean {
-        val focusedView = viewBinding.settingRv.focusedChild
-            ?: return false
-        val focusedIndex = viewBinding.settingRv.getChildAdapterPosition(focusedView)
-        if (focusedIndex == -1) {
-            return false
-        }
-        val targetIndex = getTargetIndexByKeyCode(keyCode, focusedIndex)
-        viewBinding.settingRv.requestIndexChildFocus(targetIndex)
-        return true
+        // 使用新的TV按键事件处理器
+        return TvKeyEventHelper.handleRecyclerViewKeyEvent<SettingItem>(
+            viewBinding.settingRv,
+            keyCode,
+            settingItems
+        )
     }
 
     /**
      * 根据KeyCode与当前焦点位置，取得目标焦点位置
+     * @deprecated 使用TvKeyEventHelper.handleRecyclerViewKeyEvent替代
      */
     private fun getTargetIndexByKeyCode(keyCode: Int, focusedIndex: Int): Int {
         when (keyCode) {
             //左规则
             KeyEvent.KEYCODE_DPAD_LEFT -> {
-                return settingItems.previousItemIndex<SettingItem>(focusedIndex)
+                return settingItems.previousItemIndexSafe<SettingItem>(focusedIndex)
             }
             //右规则
             KeyEvent.KEYCODE_DPAD_RIGHT -> {
-                return settingItems.nextItemIndex<SettingItem>(focusedIndex)
+                return settingItems.nextItemIndexSafe<SettingItem>(focusedIndex)
             }
             //上、下规则
             //按类型分组后，找到当前焦点所在分组的位置，取上/下一个分组的同样位置

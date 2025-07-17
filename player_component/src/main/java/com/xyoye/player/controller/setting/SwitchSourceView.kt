@@ -17,9 +17,9 @@ import com.xyoye.common_component.extension.findIndexOnLeft
 import com.xyoye.common_component.extension.findIndexOnRight
 import com.xyoye.common_component.extension.horizontal
 import com.xyoye.common_component.extension.isValid
-import com.xyoye.common_component.extension.nextItemIndex
-import com.xyoye.common_component.extension.previousItemIndex
-import com.xyoye.common_component.extension.requestIndexChildFocus
+import com.xyoye.common_component.extension.nextItemIndexSafe
+import com.xyoye.common_component.extension.previousItemIndexSafe
+import com.xyoye.common_component.extension.requestIndexChildFocusSafe
 import com.xyoye.common_component.extension.setData
 import com.xyoye.common_component.extension.setTextColorRes
 import com.xyoye.common_component.extension.toResDrawable
@@ -123,12 +123,12 @@ class SwitchSourceView(
         }
 
         if (mFileData.size > 0) {
-            viewBinding.rvFile.requestIndexChildFocus(0)
+            viewBinding.rvFile.requestIndexChildFocusSafe(0)
         } else {
             if (viewBinding.tvSearchNetworkDanmu.isVisible) {
                 viewBinding.tvSearchNetworkDanmu.requestFocus()
             } else {
-                viewBinding.rvCommonFolder.requestIndexChildFocus(0)
+                viewBinding.rvCommonFolder.requestIndexChildFocusSafe(0)
             }
         }
         return true
@@ -466,13 +466,13 @@ class SwitchSourceView(
                 if (viewBinding.tvSearchNetworkDanmu.isVisible) {
                     viewBinding.tvSearchNetworkDanmu.requestFocus()
                 } else if (mFileData.size > 0) {
-                    viewBinding.rvFile.requestIndexChildFocus(mFileData.size - 1)
+                    viewBinding.rvFile.requestIndexChildFocusSafe(mFileData.size - 1, 0)
                 }
             } else {
                 if (mPathData.size > 0) {
-                    viewBinding.rvPath.requestIndexChildFocus(mPathData.size - 1)
+                    viewBinding.rvPath.requestIndexChildFocusSafe(mPathData.size - 1, 0)
                 } else if (mFileData.size > 0) {
-                    viewBinding.rvFile.requestIndexChildFocus(0)
+                    viewBinding.rvFile.requestIndexChildFocusSafe(0)
                 }
             }
             return true
@@ -480,10 +480,10 @@ class SwitchSourceView(
 
         if (viewBinding.rvPath.focusedChild != null) {
             if (isKeyUp) {
-                viewBinding.rvCommonFolder.requestIndexChildFocus(0)
+                viewBinding.rvCommonFolder.requestIndexChildFocusSafe(0)
             } else {
                 if (mFileData.size > 0) {
-                    viewBinding.rvFile.requestIndexChildFocus(0)
+                    viewBinding.rvFile.requestIndexChildFocusSafe(0)
                 } else if (viewBinding.tvSearchNetworkDanmu.isVisible) {
                     viewBinding.tvSearchNetworkDanmu.requestFocus()
                 }
@@ -511,15 +511,15 @@ class SwitchSourceView(
         //向左的点击事件
         if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
             val targetIndex =
-                mCommonDirectoryData.previousItemIndex<FilePathBean>(focusedChildIndex)
-            viewBinding.rvCommonFolder.requestIndexChildFocus(targetIndex)
+                mCommonDirectoryData.previousItemIndexSafe<FilePathBean>(focusedChildIndex)
+            viewBinding.rvCommonFolder.requestIndexChildFocusSafe(targetIndex, focusedChildIndex)
             return true
         }
 
         //向右的点击事件
         if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
-            val targetIndex = mCommonDirectoryData.nextItemIndex<FilePathBean>(focusedChildIndex)
-            viewBinding.rvCommonFolder.requestIndexChildFocus(targetIndex)
+            val targetIndex = mCommonDirectoryData.nextItemIndexSafe<FilePathBean>(focusedChildIndex)
+            viewBinding.rvCommonFolder.requestIndexChildFocusSafe(targetIndex, focusedChildIndex)
             return true
         }
         return false

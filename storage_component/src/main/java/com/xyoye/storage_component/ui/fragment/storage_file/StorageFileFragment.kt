@@ -5,6 +5,7 @@ import androidx.core.view.isVisible
 import com.xyoye.common_component.base.BaseFragment
 import com.xyoye.common_component.extension.setData
 import com.xyoye.common_component.extension.vertical
+import com.xyoye.common_component.utils.tv.TvFocusManager
 import com.xyoye.common_component.storage.file.StorageFile
 import com.xyoye.storage_component.BR
 import com.xyoye.storage_component.R
@@ -60,11 +61,21 @@ class StorageFileFragment :
         super.onResume()
         viewModel.updateHistory()
         setRecyclerViewItemFocusAble(true)
+
+        // 恢复焦点状态
+        val focusKey = "${this::class.java.simpleName}_${dataBinding.storageFileRv.id}"
+        dataBinding.storageFileRv.post {
+            TvFocusManager.restoreFocusState(focusKey, dataBinding.storageFileRv)
+        }
     }
 
     override fun onPause() {
         super.onPause()
         setRecyclerViewItemFocusAble(false)
+
+        // 保存焦点状态
+        val focusKey = "${this::class.java.simpleName}_${dataBinding.storageFileRv.id}"
+        TvFocusManager.saveFocusState(focusKey, dataBinding.storageFileRv)
     }
 
     private fun setRecyclerViewItemFocusAble(focusAble: Boolean) {
@@ -78,6 +89,10 @@ class StorageFileFragment :
             layoutManager = vertical()
 
             adapter = StorageFileAdapter(ownerActivity, viewModel).create()
+
+            // 设置智能焦点恢复
+            val focusKey = "${this@StorageFileFragment::class.java.simpleName}_${this.id}"
+            TvFocusManager.setupSmartFocusRestore(focusKey, this)
         }
     }
 

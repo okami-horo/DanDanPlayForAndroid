@@ -6,7 +6,12 @@ import android.view.KeyEvent
 import androidx.recyclerview.widget.RecyclerView
 import com.xyoye.common_component.adapter.addItem
 import com.xyoye.common_component.adapter.buildAdapter
-import com.xyoye.common_component.extension.*
+import com.xyoye.common_component.extension.nextItemIndexSafe
+import com.xyoye.common_component.extension.previousItemIndexSafe
+import com.xyoye.common_component.extension.requestIndexChildFocusSafe
+import com.xyoye.common_component.extension.setData
+import com.xyoye.common_component.extension.vertical
+import com.xyoye.common_component.utils.tv.TvKeyEventHelper
 import com.xyoye.common_component.utils.dp2px
 import com.xyoye.common_component.utils.view.ItemDecorationOrientation
 import com.xyoye.data_component.bean.VideoScaleBean
@@ -123,31 +128,27 @@ class SettingVideoAspectView(
      * 处理KeyCode事件
      */
     private fun handleKeyCode(keyCode: Int): Boolean {
-        //已取得焦点的Item
-        val focusedChild = viewBinding.rvAspect.focusedChild
-            ?: return false
-        val focusedChildIndex = viewBinding.rvAspect.getChildAdapterPosition(focusedChild)
-        if (focusedChildIndex == -1) {
-            return false
-        }
-        val targetIndex = getTargetIndexByKeyCode(keyCode, focusedChildIndex)
-        viewBinding.rvAspect.requestIndexChildFocus(targetIndex)
-        return true
+        // 使用新的TV按键事件处理器
+        return TvKeyEventHelper.handleRecyclerViewKeyEvent<VideoScaleBean>(
+            viewBinding.rvAspect,
+            keyCode,
+            videoAspectData
+        )
     }
-
 
     /**
      * 根据KeyCode与当前焦点位置，取得目标焦点位置
+     * @deprecated 使用TvKeyEventHelper.handleRecyclerViewKeyEvent替代
      */
     private fun getTargetIndexByKeyCode(keyCode: Int, focusedIndex: Int): Int {
         return when (keyCode) {
             //左、上规则
             KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_UP -> {
-                videoAspectData.previousItemIndex<VideoScaleBean>(focusedIndex)
+                videoAspectData.previousItemIndexSafe<VideoScaleBean>(focusedIndex)
             }
             //右、下规则
             KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_DPAD_DOWN -> {
-                videoAspectData.nextItemIndex<VideoScaleBean>(focusedIndex)
+                videoAspectData.nextItemIndexSafe<VideoScaleBean>(focusedIndex)
             }
             else -> {
                 -1
