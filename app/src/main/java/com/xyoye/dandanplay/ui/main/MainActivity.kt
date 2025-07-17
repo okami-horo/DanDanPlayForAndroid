@@ -18,12 +18,14 @@ import com.xyoye.common_component.extension.hideFragment
 import com.xyoye.common_component.extension.showFragment
 import com.xyoye.common_component.services.ScreencastProvideService
 import com.xyoye.common_component.services.ScreencastReceiveService
+import com.xyoye.common_component.utils.tv.TvKeyEventHelper
 import com.xyoye.common_component.weight.ToastCenter
 import com.xyoye.common_component.weight.dialog.CommonDialog
 import com.xyoye.dandanplay.BR
 import com.xyoye.dandanplay.R
 import com.xyoye.dandanplay.databinding.ActivityMainBinding
 import com.xyoye.data_component.data.LoginData
+import com.xyoye.local_component.ui.fragment.media.MediaFragment
 import com.xyoye.user_component.ui.weight.DeveloperMenus
 import kotlin.random.Random
 import kotlin.system.exitProcess
@@ -117,6 +119,11 @@ class MainActivity : BaseActivity<MainViewModel, ActivityMainBinding>(),
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        // 处理TV端按键事件
+        if (handleTvKeyEvent(keyCode, event)) {
+            return true
+        }
+
         if (keyCode == KeyEvent.KEYCODE_BACK) {
             if (checkServiceExit()) {
                 return true
@@ -129,6 +136,63 @@ class MainActivity : BaseActivity<MainViewModel, ActivityMainBinding>(),
             }
         }
         return super.onKeyDown(keyCode, event)
+    }
+
+    /**
+     * 处理TV端按键事件
+     */
+    private fun handleTvKeyEvent(keyCode: Int, event: KeyEvent?): Boolean {
+        if (event?.action != KeyEvent.ACTION_DOWN) {
+            return false
+        }
+
+        // 处理底部导航栏的左右导航
+        if (dataBinding.navigationView.isFocused) {
+            when (keyCode) {
+                KeyEvent.KEYCODE_DPAD_LEFT -> {
+                    val currentItem = dataBinding.navigationView.selectedItemId
+                    when (currentItem) {
+                        R.id.navigation_media -> {
+                            dataBinding.navigationView.selectedItemId = R.id.navigation_home
+                            return true
+                        }
+                        R.id.navigation_personal -> {
+                            dataBinding.navigationView.selectedItemId = R.id.navigation_media
+                            return true
+                        }
+                    }
+                }
+                KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                    val currentItem = dataBinding.navigationView.selectedItemId
+                    when (currentItem) {
+                        R.id.navigation_home -> {
+                            dataBinding.navigationView.selectedItemId = R.id.navigation_media
+                            return true
+                        }
+                        R.id.navigation_media -> {
+                            dataBinding.navigationView.selectedItemId = R.id.navigation_personal
+                            return true
+                        }
+                    }
+                }
+                KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> {
+                    // 确认键处理由系统自动处理
+                    return false
+                }
+            }
+        }
+
+        // 将按键事件传递给当前Fragment
+        when (fragmentTag) {
+            TAG_FRAGMENT_MEDIA -> {
+                if (::mediaFragment.isInitialized && mediaFragment is MediaFragment) {
+                    return (mediaFragment as MediaFragment).handleKeyEvent(keyCode, event)
+                }
+            }
+            // 可以为其他Fragment添加类似的处理
+        }
+
+        return false
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

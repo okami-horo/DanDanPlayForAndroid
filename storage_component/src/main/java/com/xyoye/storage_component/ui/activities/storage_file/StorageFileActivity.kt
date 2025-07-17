@@ -23,6 +23,7 @@ import com.xyoye.common_component.storage.StorageFactory
 import com.xyoye.common_component.storage.file.StorageFile
 import com.xyoye.common_component.storage.impl.FtpStorage
 import com.xyoye.common_component.utils.SupervisorScope
+import com.xyoye.common_component.utils.tv.TvKeyEventHelper
 import com.xyoye.common_component.weight.BottomActionDialog
 import com.xyoye.data_component.bean.SheetActionBean
 import com.xyoye.data_component.bean.StorageFilePath
@@ -183,6 +184,11 @@ class StorageFileActivity : BaseActivity<StorageFileViewModel, ActivityStorageFi
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        // 处理TV端按键事件
+        if (handleTvKeyEvent(keyCode, event)) {
+            return true
+        }
+
         if (keyCode == KeyEvent.KEYCODE_BACK && mMenus?.handleBackPressed() == true) {
             return true
         }
@@ -190,6 +196,32 @@ class StorageFileActivity : BaseActivity<StorageFileViewModel, ActivityStorageFi
             return true
         }
         return super.onKeyDown(keyCode, event)
+    }
+
+    /**
+     * 处理TV端按键事件
+     */
+    private fun handleTvKeyEvent(keyCode: Int, event: KeyEvent?): Boolean {
+        if (event?.action != KeyEvent.ACTION_DOWN) {
+            return false
+        }
+
+        // 处理路径导航栏的方向键事件
+        if (dataBinding.pathRv.hasFocus()) {
+            return TvKeyEventHelper.handleRecyclerViewKeyEvent(
+                dataBinding.pathRv,
+                keyCode,
+                (dataBinding.pathRv.adapter as? StorageFilePathAdapter)?.getData() ?: emptyList()
+            )
+        }
+
+        // 将按键事件传递给当前Fragment
+        val currentFragment = mRouteFragmentMap.values.lastOrNull()
+        if (currentFragment is StorageFileFragment) {
+            return currentFragment.handleKeyEvent(keyCode, event)
+        }
+
+        return false
     }
 
     override fun onDestroy() {

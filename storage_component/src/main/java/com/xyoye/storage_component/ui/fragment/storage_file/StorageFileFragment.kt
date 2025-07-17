@@ -119,4 +119,25 @@ class StorageFileFragment :
     fun sort() {
         viewModel.changeSortOption()
     }
+
+    /**
+     * 处理TV端按键事件
+     */
+    fun handleKeyEvent(keyCode: Int, event: KeyEvent?): Boolean {
+        if (event?.action != KeyEvent.ACTION_DOWN) {
+            return false
+        }
+
+        // 处理RecyclerView的方向键导航
+        if (TvKeyEventHelper.isTvDirectionKey(keyCode)) {
+            val fileList = viewModel.storageFileLiveData.value ?: emptyList()
+            return TvKeyEventHelper.handleRecyclerViewKeyEvent(
+                dataBinding.storageFileRv,
+                keyCode,
+                fileList
+            )
+        }
+
+        return false
+    }
 }

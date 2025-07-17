@@ -6,7 +6,11 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/item_layout"
         android:layout_width="match_parent"
-        android:layout_height="170dp">
+        android:layout_height="170dp"
+        android:background="@drawable/background_tv_card_focus"
+        android:focusable="true"
+        android:tag="@string/focusable_item"
+        android:padding="2dp">
 
         <ImageView
             android:id="@+id/cover_iv"

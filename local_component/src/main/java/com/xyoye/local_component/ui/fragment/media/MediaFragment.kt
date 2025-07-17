@@ -1,5 +1,6 @@
 package com.xyoye.local_component.ui.fragment.media
 
+import android.view.KeyEvent
 import androidx.core.view.isVisible
 import com.alibaba.android.arouter.facade.annotation.Autowired
 import com.alibaba.android.arouter.facade.annotation.Route
@@ -13,6 +14,8 @@ import com.xyoye.common_component.extension.deletable
 import com.xyoye.common_component.extension.setData
 import com.xyoye.common_component.extension.vertical
 import com.xyoye.common_component.services.ScreencastProvideService
+import com.xyoye.common_component.utils.tv.TvFocusManager
+import com.xyoye.common_component.utils.tv.TvKeyEventHelper
 import com.xyoye.common_component.weight.BottomActionDialog
 import com.xyoye.common_component.weight.ToastCenter
 import com.xyoye.common_component.weight.dialog.CommonDialog
@@ -57,6 +60,43 @@ class MediaFragment : BaseFragment<MediaViewModel, FragmentMediaBinding>() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        // 恢复TV端焦点状态
+        val focusKey = "${this::class.java.simpleName}_${dataBinding.mediaLibRv.id}"
+        dataBinding.mediaLibRv.post {
+            TvFocusManager.restoreFocusState(focusKey, dataBinding.mediaLibRv)
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        // 保存TV端焦点状态
+        val focusKey = "${this::class.java.simpleName}_${dataBinding.mediaLibRv.id}"
+        TvFocusManager.saveFocusState(focusKey, dataBinding.mediaLibRv)
+    }
+
+    /**
+     * 处理TV端按键事件
+     */
+    fun handleKeyEvent(keyCode: Int, event: KeyEvent?): Boolean {
+        if (event?.action != KeyEvent.ACTION_DOWN) {
+            return false
+        }
+
+        // 处理RecyclerView的方向键导航
+        if (TvKeyEventHelper.isTvDirectionKey(keyCode)) {
+            val mediaLibList = viewModel.mediaLibWithStatusLiveData.value ?: emptyList()
+            return TvKeyEventHelper.handleRecyclerViewKeyEvent(
+                dataBinding.mediaLibRv,
+                keyCode,
+                mediaLibList
+            )
+        }
+
+        return false
+    }
+
     private fun initRv() {
         dataBinding.mediaLibRv.apply {
             layoutManager = vertical()
@@ -95,6 +135,10 @@ class MediaFragment : BaseFragment<MediaViewModel, FragmentMediaBinding>() {
                     }
                 }
             }
+
+            // 设置TV端焦点管理
+            val focusKey = "${this@MediaFragment::class.java.simpleName}_${this.id}"
+            TvFocusManager.setupSmartFocusRestore(focusKey, this)
         }
     }
 

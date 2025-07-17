@@ -1,5 +1,6 @@
 package com.xyoye.anime_component.ui.fragment.search_anime
 
+import android.view.KeyEvent
 import androidx.core.view.isVisible
 import com.xyoye.anime_component.BR
 import com.xyoye.anime_component.R
@@ -18,6 +19,8 @@ import com.xyoye.common_component.extension.setData
 import com.xyoye.common_component.extension.setTextColorRes
 import com.xyoye.common_component.extension.toResColor
 import com.xyoye.common_component.utils.dp2px
+import com.xyoye.common_component.utils.tv.TvFocusManager
+import com.xyoye.common_component.utils.tv.TvKeyEventHelper
 import com.xyoye.common_component.utils.view.ItemDecorationDrawable
 import com.xyoye.common_component.utils.view.ItemDecorationSpace
 import com.xyoye.data_component.data.CommonTypeData
@@ -109,6 +112,10 @@ class SearchAnimeFragment :
                     }
                 }
             }
+
+            // 设置TV端焦点管理
+            val focusKey = "${this@SearchAnimeFragment::class.java.simpleName}_animeType_${this.id}"
+            TvFocusManager.setupSmartFocusRestore(focusKey, this)
         }
 
         dataBinding.sortRv.apply {
@@ -137,6 +144,10 @@ class SearchAnimeFragment :
                     }
                 }
             }
+
+            // 设置TV端焦点管理
+            val focusKey = "${this@SearchAnimeFragment::class.java.simpleName}_sort_${this.id}"
+            TvFocusManager.setupSmartFocusRestore(focusKey, this)
         }
 
         dataBinding.animeRv.apply {
@@ -152,6 +163,10 @@ class SearchAnimeFragment :
                     R.color.item_bg_color.toResColor(mAttachActivity)
                 )
             )
+
+            // 设置TV端焦点管理
+            val focusKey = "${this@SearchAnimeFragment::class.java.simpleName}_anime_${this.id}"
+            TvFocusManager.setupSmartFocusRestore(focusKey, this)
         }
     }
 
