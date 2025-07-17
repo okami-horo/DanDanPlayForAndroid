@@ -1,0 +1,40 @@
+{
+  "folders": [
+    {
+      "path": "."
+    }
+  ],
+  "settings": {
+    // 继承 .vscode/settings.json 的配置
+    "java.configuration.runtimes": [
+      {
+        "name": "JavaSE-17",
+        "path": "/root/.sdkman/candidates/java/17.0.5.fx-zulu"
+      }
+    ],
+    "java.import.gradle.enabled": true,
+    "java.import.gradle.wrapper.enabled": true,
+    "java.import.gradle.version": "7.5.1",
+    "java.import.gradle.java.home": "/root/.sdkman/candidates/java/17.0.5.fx-zulu",
+    // Kotlin 配置
+    "kotlin.languageServer.path": "",
+    "kotlin.languageServer.enabled": true,
+    // 项目特定配置
+    "files.exclude": {
+      "**/.gradle": true,
+      "**/build": true,
+      "**/.idea": true,
+      "**/*.iml": true,
+      "**/.DS_Store": true
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "fwcd.kotlin",
+      "redhat.java",
+      "vscjava.vscode-java-pack",
+      "adelphes.android-dev-ext",
+      "vscjava.vscode-gradle"
+    ]
+  }
+}

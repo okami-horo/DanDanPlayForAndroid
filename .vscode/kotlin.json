@@ -1,0 +1,32 @@
+{
+  "kotlin": {
+    "languageServer": {
+      "enabled": true,
+      "path": "",
+      "transport": "stdio"
+    },
+    "compiler": {
+      "jvm": {
+        "target": "1.8"
+      }
+    },
+    "linting": {
+      "run": "onSave"
+    },
+    "completion": {
+      "snippets": {
+        "enabled": true
+      }
+    },
+    "debugAdapter": {
+      "enabled": true,
+      "path": ""
+    },
+    "inlayHints": {
+      "enabled": true,
+      "typeHints": true,
+      "parameterHints": true,
+      "chainingHints": true
+    }
+  }
+}

@@ -1,3 +1,68 @@
 {
-  "git.ignoreLimitWarning": true
+  "git.ignoreLimitWarning": true,
+  // Kotlin Language Server 配置
+  "kotlin.languageServer.enabled": true,
+  "kotlin.languageServer.path": "",
+  "kotlin.compiler.jvm.target": "1.8",
+  "kotlin.linting.run": "onSave",
+  "kotlin.completion.snippets.enabled": true,
+  "kotlin.debugAdapter.enabled": true,
+  "kotlin.inlayHints.enabled": true,
+  "kotlin.inlayHints.typeHints": true,
+  "kotlin.inlayHints.parameterHints": true,
+  "kotlin.inlayHints.chainingHints": true,
+  // Java 配置
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "java.compile.nullAnalysis.mode": "automatic",
+  "java.completion.enabled": true,
+  "java.completion.guessMethodArguments": true,
+  "java.completion.importOrder": [
+    "java",
+    "javax",
+    "com",
+    "org"
+  ],
+  "java.format.enabled": true,
+  "java.saveActions.organizeImports": true,
+  "java.signatureHelp.enabled": true,
+  "java.sources.organizeImports.starThreshold": 99,
+  "java.sources.organizeImports.staticStarThreshold": 99,
+  // Android 相关配置
+  "android.home": "/opt/android-sdk",
+  "gradle.nestedProjects": true,
+  // 文件关联
+  "files.associations": {
+    "*.kt": "kotlin",
+    "*.kts": "kotlin",
+    "*.gradle": "groovy",
+    "*.gradle.kts": "kotlin"
+  },
+  // 编辑器配置
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "explicit",
+    "source.fixAll": "explicit"
+  },
+  "editor.suggest.insertMode": "replace",
+  "editor.quickSuggestions": {
+    "other": true,
+    "comments": false,
+    "strings": true
+  },
+  // 错误和警告显示
+  "problems.decorations.enabled": true,
+  "problems.showCurrentInStatus": true,
+  // 搜索配置
+  "search.exclude": {
+    "**/build": true,
+    "**/.gradle": true,
+    "**/node_modules": true,
+    "**/.git": true
+  },
+  // 文件监视器配置
+  "files.watcherExclude": {
+    "**/build/**": true,
+    "**/.gradle/**": true,
+    "**/node_modules/**": true
+  }
 }

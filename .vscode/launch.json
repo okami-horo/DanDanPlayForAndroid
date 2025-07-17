@@ -1,0 +1,18 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "kotlin",
+      "request": "launch",
+      "name": "Kotlin Debug",
+      "projectRoot": "${workspaceFolder}",
+      "mainClass": ""
+    },
+    {
+      "type": "java",
+      "name": "Debug (Launch) - Current File",
+      "request": "launch",
+      "mainClass": "${file}"
+    }
+  ]
+}

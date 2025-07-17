@@ -1,0 +1,48 @@
+{
+  "recommendations": [
+    // Kotlin 支持
+    "fwcd.kotlin",
+    
+    // Java 支持
+    "redhat.java",
+    "vscjava.vscode-java-pack",
+    "vscjava.vscode-java-dependency",
+    "vscjava.vscode-java-test",
+    "vscjava.vscode-maven",
+    "vscjava.vscode-gradle",
+    
+    // Android 开发
+    "adelphes.android-dev-ext",
+    
+    // Gradle 支持
+    "vscjava.vscode-gradle",
+    "naco-siren.gradle-language",
+    
+    // Git 支持
+    "eamodio.gitlens",
+    
+    // 代码格式化
+    "esbenp.prettier-vscode",
+    
+    // 文件图标
+    "vscode-icons-team.vscode-icons",
+    
+    // 括号高亮
+    "CoenraadS.bracket-pair-colorizer-2",
+    
+    // 路径智能提示
+    "christian-kohler.path-intellisense",
+    
+    // 自动重命名标签
+    "formulahendry.auto-rename-tag",
+    
+    // XML 支持
+    "redhat.vscode-xml",
+    
+    // YAML 支持
+    "redhat.vscode-yaml",
+    
+    // 错误提示增强
+    "usernamehw.errorlens"
+  ]
+}
