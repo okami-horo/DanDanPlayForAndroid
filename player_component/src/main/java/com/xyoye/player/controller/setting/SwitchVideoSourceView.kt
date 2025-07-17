@@ -9,6 +9,7 @@ import com.xyoye.common_component.adapter.addItem
 import com.xyoye.common_component.adapter.buildAdapter
 import com.xyoye.common_component.extension.nextItemIndexSafe
 import com.xyoye.common_component.extension.previousItemIndexSafe
+import com.xyoye.common_component.extension.requestIndexChildFocus
 import com.xyoye.common_component.extension.requestIndexChildFocusSafe
 import com.xyoye.common_component.utils.tv.TvKeyEventHelper
 import com.xyoye.common_component.extension.setData
@@ -127,7 +128,7 @@ class SwitchVideoSourceView @JvmOverloads constructor(
      */
     private fun handleKeyCode(keyCode: Int): Boolean {
         // 使用新的TV按键事件处理器
-        return TvKeyEventHelper.handleRecyclerViewKeyEvent<VideoSourceBean>(
+        return TvKeyEventHelper.handleRecyclerViewKeyEvent(
             viewBinding.sourceRv,
             keyCode,
             mVideoSources

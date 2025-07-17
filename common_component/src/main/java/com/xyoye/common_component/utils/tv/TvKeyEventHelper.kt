@@ -22,7 +22,7 @@ object TvKeyEventHelper {
      * @param items 数据列表
      * @return 是否处理了该事件
      */
-    inline fun <reified T> handleRecyclerViewKeyEvent(
+    fun handleRecyclerViewKeyEvent(
         recyclerView: RecyclerView,
         keyCode: Int,
         items: List<*>
@@ -30,7 +30,7 @@ object TvKeyEventHelper {
         val focusedChild = recyclerView.focusedChild ?: return false
         val focusedIndex = recyclerView.getChildAdapterPosition(focusedChild)
         if (focusedIndex == -1) return false
-        
+
         val targetIndex = when (keyCode) {
             KeyEvent.KEYCODE_DPAD_LEFT -> {
                 handleLeftKey(recyclerView, focusedIndex, items)
@@ -46,18 +46,18 @@ object TvKeyEventHelper {
             }
             else -> return false
         }
-        
+
         if (targetIndex != -1 && targetIndex != focusedIndex) {
             return recyclerView.requestIndexChildFocusSafe(targetIndex, focusedIndex)
         }
-        
+
         return false
     }
     
     /**
      * 处理左键事件
      */
-    inline fun <reified T> handleLeftKey(
+    fun handleLeftKey(
         recyclerView: RecyclerView,
         currentIndex: Int,
         items: List<*>
@@ -67,7 +67,7 @@ object TvKeyEventHelper {
                 // 网格布局：向左移动一列
                 val spanCount = layoutManager.spanCount
                 if (currentIndex % spanCount > 0) {
-                    items.previousItemIndexSafe<T>(currentIndex)
+                    maxOf(0, currentIndex - 1)
                 } else {
                     // 已经在最左列，保持当前位置
                     currentIndex
@@ -76,20 +76,20 @@ object TvKeyEventHelper {
             is LinearLayoutManager -> {
                 if (layoutManager.orientation == LinearLayoutManager.HORIZONTAL) {
                     // 水平线性布局：向前移动
-                    items.previousItemIndexSafe<T>(currentIndex)
+                    maxOf(0, currentIndex - 1)
                 } else {
                     // 垂直线性布局：左键通常不处理
                     -1
                 }
             }
-            else -> items.previousItemIndexSafe<T>(currentIndex)
+            else -> maxOf(0, currentIndex - 1)
         }
     }
     
     /**
      * 处理右键事件
      */
-    inline fun <reified T> handleRightKey(
+    fun handleRightKey(
         recyclerView: RecyclerView,
         currentIndex: Int,
         items: List<*>
@@ -99,7 +99,7 @@ object TvKeyEventHelper {
                 // 网格布局：向右移动一列
                 val spanCount = layoutManager.spanCount
                 if (currentIndex % spanCount < spanCount - 1 && currentIndex < items.size - 1) {
-                    items.nextItemIndexSafe<T>(currentIndex)
+                    minOf(items.size - 1, currentIndex + 1)
                 } else {
                     // 已经在最右列，保持当前位置
                     currentIndex
@@ -108,20 +108,20 @@ object TvKeyEventHelper {
             is LinearLayoutManager -> {
                 if (layoutManager.orientation == LinearLayoutManager.HORIZONTAL) {
                     // 水平线性布局：向后移动
-                    items.nextItemIndexSafe<T>(currentIndex)
+                    minOf(items.size - 1, currentIndex + 1)
                 } else {
                     // 垂直线性布局：右键通常不处理
                     -1
                 }
             }
-            else -> items.nextItemIndexSafe<T>(currentIndex)
+            else -> minOf(items.size - 1, currentIndex + 1)
         }
     }
     
     /**
      * 处理上键事件
      */
-    inline fun <reified T> handleUpKey(
+    fun handleUpKey(
         recyclerView: RecyclerView,
         currentIndex: Int,
         items: List<*>
@@ -132,12 +132,12 @@ object TvKeyEventHelper {
                 val spanCount = layoutManager.spanCount
                 val targetIndex = currentIndex - spanCount
                 if (targetIndex >= 0) {
-                    // 确保目标位置有效且是正确的类型
-                    if (targetIndex < items.size && items[targetIndex] is T) {
+                    // 确保目标位置有效
+                    if (targetIndex < items.size) {
                         targetIndex
                     } else {
                         // 寻找最近的有效位置
-                        items.previousItemIndexSafe<T>(currentIndex)
+                        maxOf(0, currentIndex - 1)
                     }
                 } else {
                     // 已经在第一行，保持当前位置
@@ -147,20 +147,20 @@ object TvKeyEventHelper {
             is LinearLayoutManager -> {
                 if (layoutManager.orientation == LinearLayoutManager.VERTICAL) {
                     // 垂直线性布局：向前移动
-                    items.previousItemIndexSafe<T>(currentIndex)
+                    maxOf(0, currentIndex - 1)
                 } else {
                     // 水平线性布局：上键通常不处理
                     -1
                 }
             }
-            else -> items.previousItemIndexSafe<T>(currentIndex)
+            else -> maxOf(0, currentIndex - 1)
         }
     }
     
     /**
      * 处理下键事件
      */
-    inline fun <reified T> handleDownKey(
+    fun handleDownKey(
         recyclerView: RecyclerView,
         currentIndex: Int,
         items: List<*>
@@ -171,13 +171,8 @@ object TvKeyEventHelper {
                 val spanCount = layoutManager.spanCount
                 val targetIndex = currentIndex + spanCount
                 if (targetIndex < items.size) {
-                    // 确保目标位置有效且是正确的类型
-                    if (items[targetIndex] is T) {
-                        targetIndex
-                    } else {
-                        // 寻找最近的有效位置
-                        items.nextItemIndexSafe<T>(currentIndex)
-                    }
+                    // 确保目标位置有效
+                    targetIndex
                 } else {
                     // 已经在最后一行，保持当前位置
                     currentIndex
@@ -186,13 +181,13 @@ object TvKeyEventHelper {
             is LinearLayoutManager -> {
                 if (layoutManager.orientation == LinearLayoutManager.VERTICAL) {
                     // 垂直线性布局：向后移动
-                    items.nextItemIndexSafe<T>(currentIndex)
+                    minOf(items.size - 1, currentIndex + 1)
                 } else {
                     // 水平线性布局：下键通常不处理
                     -1
                 }
             }
-            else -> items.nextItemIndexSafe<T>(currentIndex)
+            else -> minOf(items.size - 1, currentIndex + 1)
         }
     }
     

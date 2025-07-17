@@ -17,8 +17,11 @@ import com.xyoye.common_component.extension.findIndexOnLeft
 import com.xyoye.common_component.extension.findIndexOnRight
 import com.xyoye.common_component.extension.horizontal
 import com.xyoye.common_component.extension.isValid
+import com.xyoye.common_component.extension.nextItemIndex
 import com.xyoye.common_component.extension.nextItemIndexSafe
+import com.xyoye.common_component.extension.previousItemIndex
 import com.xyoye.common_component.extension.previousItemIndexSafe
+import com.xyoye.common_component.extension.requestIndexChildFocus
 import com.xyoye.common_component.extension.requestIndexChildFocusSafe
 import com.xyoye.common_component.extension.setData
 import com.xyoye.common_component.extension.setTextColorRes

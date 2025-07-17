@@ -10,6 +10,7 @@ import com.xyoye.common_component.config.PlayerConfig
 import com.xyoye.common_component.extension.grid
 import com.xyoye.common_component.extension.nextItemIndexSafe
 import com.xyoye.common_component.extension.previousItemIndexSafe
+import com.xyoye.common_component.extension.requestIndexChildFocus
 import com.xyoye.common_component.extension.requestIndexChildFocusSafe
 import com.xyoye.common_component.utils.tv.TvKeyEventHelper
 import com.xyoye.common_component.extension.setData
@@ -129,7 +130,7 @@ class PlayerSettingView(
      */
     private fun handleKeyCode(keyCode: Int): Boolean {
         // 使用新的TV按键事件处理器
-        return TvKeyEventHelper.handleRecyclerViewKeyEvent<SettingItem>(
+        return TvKeyEventHelper.handleRecyclerViewKeyEvent(
             viewBinding.settingRv,
             keyCode,
             settingItems
