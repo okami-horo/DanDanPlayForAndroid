@@ -1,10 +1,11 @@
 name: package beta
 
-# 主分支提交代码时，构建最新测试包
+# 非master分支提交代码时，构建最新测试包
 on:
   push:
     branches:
-      - develop
+      - '*'
+      - '!master'
   # 添加手动触发选项
   workflow_dispatch:
     inputs:
@@ -15,8 +16,8 @@ on:
         type: choice
         options:
           - develop
-          - master
           - focus
+          - master
       build_note:
         description: '构建说明（可选）'
         required: false
@@ -31,7 +32,7 @@ jobs:
       - name: checkout source code
         uses: actions/checkout@v2
         with:
-          ref: ${{ github.event.inputs.branch || 'develop' }}
+          ref: ${{ github.event.inputs.branch || github.ref }}
 
       # 2.配置JDK
       - name: set up JDK
@@ -83,8 +84,8 @@ jobs:
           body: |
             🚀 **测试版本构建**
 
-            **构建分支**: ${{ github.event.inputs.branch || 'develop' }}
-            **构建说明**: ${{ github.event.inputs.build_note || '最新测试包，与主分支代码同步' }}
+            **构建分支**: ${{ github.event.inputs.branch || github.ref_name }}
+            **构建说明**: ${{ github.event.inputs.build_note || '最新测试包，非master分支代码构建' }}
             **构建时间**: ${{ github.run_id }}
             **触发方式**: ${{ github.event_name == 'workflow_dispatch' && '手动触发' || '自动触发' }}
 
