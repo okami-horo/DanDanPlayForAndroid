@@ -87,7 +87,6 @@ class SearchMagnetFragmentViewModel : BaseViewModel() {
     fun getMagnetSubgroup() {
         val subgroupData = magnetSubgroupData.value
         if (subgroupData != null) {
-            magnetSubgroupData.postValue(subgroupData)
             return
         }
 

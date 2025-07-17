@@ -1,11 +1,13 @@
 package com.xyoye.storage_component.ui.fragment.storage_file
 
+import android.view.KeyEvent
 import androidx.core.view.children
 import androidx.core.view.isVisible
 import com.xyoye.common_component.base.BaseFragment
 import com.xyoye.common_component.extension.setData
 import com.xyoye.common_component.extension.vertical
 import com.xyoye.common_component.utils.tv.TvFocusManager
+import com.xyoye.common_component.utils.tv.TvKeyEventHelper
 import com.xyoye.common_component.storage.file.StorageFile
 import com.xyoye.storage_component.BR
 import com.xyoye.storage_component.R
@@ -130,7 +132,7 @@ class StorageFileFragment :
 
         // 处理RecyclerView的方向键导航
         if (TvKeyEventHelper.isTvDirectionKey(keyCode)) {
-            val fileList = viewModel.storageFileLiveData.value ?: emptyList()
+            val fileList = viewModel.fileLiveData.value ?: emptyList()
             return TvKeyEventHelper.handleRecyclerViewKeyEvent(
                 dataBinding.storageFileRv,
                 keyCode,

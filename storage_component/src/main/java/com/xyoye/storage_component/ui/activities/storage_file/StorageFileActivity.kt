@@ -13,6 +13,7 @@ import com.alibaba.android.arouter.facade.annotation.Autowired
 import com.alibaba.android.arouter.facade.annotation.Route
 import com.alibaba.android.arouter.launcher.ARouter
 import com.google.android.material.shape.ShapeAppearanceModel
+import com.xyoye.common_component.adapter.BaseAdapter
 import com.xyoye.common_component.base.BaseActivity
 import com.xyoye.common_component.config.RouteTable
 import com.xyoye.common_component.extension.horizontal
@@ -211,7 +212,7 @@ class StorageFileActivity : BaseActivity<StorageFileViewModel, ActivityStorageFi
             return TvKeyEventHelper.handleRecyclerViewKeyEvent(
                 dataBinding.pathRv,
                 keyCode,
-                (dataBinding.pathRv.adapter as? StorageFilePathAdapter)?.getData() ?: emptyList()
+                (dataBinding.pathRv.adapter as? BaseAdapter)?.items ?: emptyList<Any>()
             )
         }
 
