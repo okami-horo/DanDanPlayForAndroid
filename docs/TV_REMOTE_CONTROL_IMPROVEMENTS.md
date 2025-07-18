@@ -7,6 +7,7 @@
 2. **焦点重置问题**：在`previousItemIndex`和`nextItemIndex`方法中，当找不到目标时会循环到列表的另一端，导致焦点突然跳转
 3. **焦点状态管理不完善**：缺乏焦点状态的保存和恢复机制，在数据更新时焦点容易丢失
 4. **边界检查不足**：没有充分的边界检查，可能导致焦点跳转到无效位置
+5. **边界按键事件处理问题**：当用户在列表边界（如最后一个元素）按下方向键时，事件没有被正确消费，导致按键事件向上传递，可能被其他组件处理产生意外行为
 
 ## 解决方案
 
@@ -22,14 +23,30 @@
 - `getCurrentFocusedPosition()`: 获取当前获得焦点的item位置
 - `requestIndexChildFocusSafe()`: 安全的焦点请求，带有边界检查和状态验证
 
-### 2. 增强焦点导航逻辑
+### 2. 修复边界按键事件处理
+
+#### 问题描述
+在之前的实现中，当用户在RecyclerView的边界位置（如最后一个元素）按下方向键时，`TvKeyEventHelper.handleRecyclerViewKeyEvent`方法会返回false，表示没有处理该事件。这导致按键事件继续向上传递，可能被其他组件处理，产生意外的行为。
+
+#### 解决方案
+修改`TvKeyEventHelper.handleRecyclerViewKeyEvent`方法的逻辑：
+- 当`targetIndex`为-1时，表示无法处理该方向的导航，不消费事件（返回false）
+- 当`targetIndex`与当前索引相同时，表示已经在边界位置，消费事件但不移动焦点（返回true）
+- 只有当`targetIndex`不同于当前索引时，才尝试移动焦点
+
+#### 改进的`handleDownKey`方法
+针对垂直线性布局，明确检查是否已经在最后一个项目：
+- 如果`currentIndex >= items.size - 1`，返回`currentIndex`（保持当前位置）
+- 否则返回`currentIndex + 1`（移动到下一个项目）
+
+### 3. 增强焦点导航逻辑
 
 #### 改进的导航方法
 - `previousItemIndexSafe()`: 安全的上一个Item查找，优先查找相邻项目
 - `nextItemIndexSafe()`: 安全的下一个Item查找，优先查找相邻项目
 - 默认不允许循环跳转，防止焦点突然从底部跳到顶部
 
-### 3. 焦点状态管理器
+### 4. 焦点状态管理器
 
 #### TvFocusManager功能
 - 保存和恢复RecyclerView的焦点状态
@@ -49,7 +66,7 @@ recyclerView.restoreTvFocus("unique_key")
 recyclerView.setupSmartTvFocus("unique_key")
 ```
 
-### 4. TV端按键事件处理增强
+### 5. TV端按键事件处理增强
 
 #### TvKeyEventHelper功能
 - 智能处理不同布局管理器的按键事件

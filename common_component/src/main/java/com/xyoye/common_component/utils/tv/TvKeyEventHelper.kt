@@ -47,11 +47,18 @@ object TvKeyEventHelper {
             else -> return false
         }
 
-        if (targetIndex != -1 && targetIndex != focusedIndex) {
-            return recyclerView.requestIndexChildFocusSafe(targetIndex, focusedIndex)
+        // 如果targetIndex为-1，表示无法处理该方向的导航，不消费事件
+        if (targetIndex == -1) {
+            return false
         }
 
-        return false
+        // 如果targetIndex与当前索引相同，表示已经在边界位置，消费事件但不移动焦点
+        if (targetIndex == focusedIndex) {
+            return true
+        }
+
+        // 尝试移动焦点到目标位置
+        return recyclerView.requestIndexChildFocusSafe(targetIndex, focusedIndex)
     }
     
     /**
@@ -180,14 +187,27 @@ object TvKeyEventHelper {
             }
             is LinearLayoutManager -> {
                 if (layoutManager.orientation == LinearLayoutManager.VERTICAL) {
-                    // 垂直线性布局：向后移动
-                    minOf(items.size - 1, currentIndex + 1)
+                    // 垂直线性布局：检查是否已经在最后一个项目
+                    if (currentIndex >= items.size - 1) {
+                        // 已经在最后一个项目，保持当前位置
+                        currentIndex
+                    } else {
+                        // 移动到下一个项目
+                        currentIndex + 1
+                    }
                 } else {
                     // 水平线性布局：下键通常不处理
                     -1
                 }
             }
-            else -> minOf(items.size - 1, currentIndex + 1)
+            else -> {
+                // 其他布局管理器：检查是否已经在最后一个项目
+                if (currentIndex >= items.size - 1) {
+                    currentIndex
+                } else {
+                    currentIndex + 1
+                }
+            }
         }
     }
     
