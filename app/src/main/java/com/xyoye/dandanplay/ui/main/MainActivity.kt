@@ -6,6 +6,7 @@ import android.view.MenuItem
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
 import androidx.lifecycle.MutableLiveData
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.alibaba.android.arouter.facade.annotation.Autowired
 import com.alibaba.android.arouter.launcher.ARouter
 import com.xyoye.common_component.base.BaseActivity
@@ -55,6 +56,15 @@ class MainActivity : BaseActivity<MainViewModel, ActivityMainBinding>(),
     // 标题栏菜单管理器
     private lateinit var mMenus: DeveloperMenus
 
+    // TV端导航相关
+    private var isTvMode = false
+    private lateinit var tvNavigationAdapter: TvNavigationAdapter
+    private val tvNavigationItems = listOf(
+        TvNavigationItem(R.id.navigation_home, "首页", R.drawable.ic_main_home),
+        TvNavigationItem(R.id.navigation_media, "媒体库", R.drawable.ic_main_media, true),
+        TvNavigationItem(R.id.navigation_personal, "我的", R.drawable.ic_main_personal)
+    )
+
     override fun initViewModel() =
         ViewModelInit(
             BR.viewModel,
@@ -71,6 +81,9 @@ class MainActivity : BaseActivity<MainViewModel, ActivityMainBinding>(),
             setDisplayShowTitleEnabled(true)
         }
 
+        // 检测是否为TV模式
+        isTvMode = TvUtils.supportTvInterface(this)
+
         //默认显示媒体库页面
         //标题
         title = "媒体库"
@@ -82,30 +95,13 @@ class MainActivity : BaseActivity<MainViewModel, ActivityMainBinding>(),
         )
         //切换到媒体库页面
         switchFragment(TAG_FRAGMENT_MEDIA)
-        //底部导航栏设置选中
-        dataBinding.navigationView.post {
-            dataBinding.navigationView.selectedItemId = R.id.navigation_media
-        }
 
-        //设置底部导航栏事件
-        dataBinding.navigationView.setOnItemSelectedListener {
-            when (it.itemId) {
-                R.id.navigation_home -> {
-                    title = "弹弹play"
-                    switchFragment(TAG_FRAGMENT_HOME)
-                }
-
-                R.id.navigation_media -> {
-                    title = "媒体库"
-                    switchFragment(TAG_FRAGMENT_MEDIA)
-                }
-
-                R.id.navigation_personal -> {
-                    title = "个人中心"
-                    switchFragment(TAG_FRAGMENT_PERSONAL)
-                }
-            }
-            return@setOnItemSelectedListener true
+        if (isTvMode) {
+            // TV模式：初始化左侧导航
+            initTvNavigation()
+        } else {
+            // 手机模式：使用底部导航
+            initBottomNavigation()
         }
 
         viewModel.initDatabase()
@@ -146,38 +142,82 @@ class MainActivity : BaseActivity<MainViewModel, ActivityMainBinding>(),
             return false
         }
 
-        // 处理底部导航栏的左右导航
-        if (dataBinding.navigationView.isFocused) {
-            when (keyCode) {
-                KeyEvent.KEYCODE_DPAD_LEFT -> {
-                    val currentItem = dataBinding.navigationView.selectedItemId
-                    when (currentItem) {
-                        R.id.navigation_media -> {
-                            dataBinding.navigationView.selectedItemId = R.id.navigation_home
-                            return true
-                        }
-                        R.id.navigation_personal -> {
-                            dataBinding.navigationView.selectedItemId = R.id.navigation_media
-                            return true
-                        }
-                    }
-                }
-                KeyEvent.KEYCODE_DPAD_RIGHT -> {
-                    val currentItem = dataBinding.navigationView.selectedItemId
-                    when (currentItem) {
-                        R.id.navigation_home -> {
-                            dataBinding.navigationView.selectedItemId = R.id.navigation_media
-                            return true
-                        }
-                        R.id.navigation_media -> {
-                            dataBinding.navigationView.selectedItemId = R.id.navigation_personal
+        if (isTvMode) {
+            // TV模式：处理左侧导航的按键事件
+            val tvNavigationRv = findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.tv_navigation_rv)
+            val fragmentContainer = findViewById<android.widget.FrameLayout>(R.id.fragment_container)
+
+            // 处理左侧导航菜单的按键事件
+            if (tvNavigationRv?.hasFocus() == true) {
+                when (keyCode) {
+                    KeyEvent.KEYCODE_DPAD_UP -> {
+                        val currentPos = tvNavigationAdapter.getSelectedPosition()
+                        if (currentPos > 0) {
+                            tvNavigationAdapter.setSelectedPosition(currentPos - 1)
+                            tvNavigationRv.scrollToPosition(currentPos - 1)
                             return true
                         }
                     }
+                    KeyEvent.KEYCODE_DPAD_DOWN -> {
+                        val currentPos = tvNavigationAdapter.getSelectedPosition()
+                        if (currentPos < tvNavigationItems.size - 1) {
+                            tvNavigationAdapter.setSelectedPosition(currentPos + 1)
+                            tvNavigationRv.scrollToPosition(currentPos + 1)
+                            return true
+                        }
+                    }
+                    KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> {
+                        // 右键或确认键：将焦点移到内容区域
+                        fragmentContainer?.requestFocus()
+                        return true
+                    }
                 }
-                KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> {
-                    // 确认键处理由系统自动处理
-                    return false
+            }
+
+            // 处理内容区域的按键事件
+            if (fragmentContainer?.hasFocus() == true) {
+                when (keyCode) {
+                    KeyEvent.KEYCODE_DPAD_LEFT -> {
+                        // 左键：返回到导航菜单
+                        tvNavigationRv?.requestFocus()
+                        return true
+                    }
+                }
+            }
+        } else {
+            // 手机模式：处理底部导航的按键事件
+            if (dataBinding.navigationView.isFocused) {
+                when (keyCode) {
+                    KeyEvent.KEYCODE_DPAD_LEFT -> {
+                        val currentItem = dataBinding.navigationView.selectedItemId
+                        when (currentItem) {
+                            R.id.navigation_media -> {
+                                dataBinding.navigationView.selectedItemId = R.id.navigation_home
+                                return true
+                            }
+                            R.id.navigation_personal -> {
+                                dataBinding.navigationView.selectedItemId = R.id.navigation_media
+                                return true
+                            }
+                        }
+                    }
+                    KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                        val currentItem = dataBinding.navigationView.selectedItemId
+                        when (currentItem) {
+                            R.id.navigation_home -> {
+                                dataBinding.navigationView.selectedItemId = R.id.navigation_media
+                                return true
+                            }
+                            R.id.navigation_media -> {
+                                dataBinding.navigationView.selectedItemId = R.id.navigation_personal
+                                return true
+                            }
+                        }
+                    }
+                    KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> {
+                        // 确认键处理由系统自动处理
+                        return false
+                    }
                 }
             }
         }
@@ -207,6 +247,82 @@ class MainActivity : BaseActivity<MainViewModel, ActivityMainBinding>(),
 
     override fun getLoginLiveData(): MutableLiveData<LoginData> {
         return viewModel.reLoginLiveData
+    }
+
+    /**
+     * 初始化TV端左侧导航
+     */
+    private fun initTvNavigation() {
+        // 确保TV布局中的RecyclerView存在
+        val tvNavigationRv = findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.tv_navigation_rv)
+        if (tvNavigationRv != null) {
+            tvNavigationAdapter = TvNavigationAdapter(tvNavigationItems) { item ->
+                onTvNavigationItemSelected(item)
+            }
+
+            tvNavigationRv.apply {
+                layoutManager = LinearLayoutManager(this@MainActivity)
+                adapter = tvNavigationAdapter
+                // 设置默认焦点到媒体库
+                post {
+                    requestFocus()
+                    tvNavigationAdapter.setSelectedPosition(1) // 媒体库位置
+                }
+            }
+        }
+    }
+
+    /**
+     * 初始化手机端底部导航
+     */
+    private fun initBottomNavigation() {
+        //底部导航栏设置选中
+        dataBinding.navigationView.post {
+            dataBinding.navigationView.selectedItemId = R.id.navigation_media
+        }
+
+        //设置底部导航栏事件
+        dataBinding.navigationView.setOnItemSelectedListener {
+            when (it.itemId) {
+                R.id.navigation_home -> {
+                    title = "弹弹play"
+                    switchFragment(TAG_FRAGMENT_HOME)
+                }
+
+                R.id.navigation_media -> {
+                    title = "媒体库"
+                    switchFragment(TAG_FRAGMENT_MEDIA)
+                }
+
+                R.id.navigation_personal -> {
+                    title = "个人中心"
+                    switchFragment(TAG_FRAGMENT_PERSONAL)
+                }
+            }
+            return@setOnItemSelectedListener true
+        }
+    }
+
+    /**
+     * TV端导航菜单项选择处理
+     */
+    private fun onTvNavigationItemSelected(item: TvNavigationItem) {
+        when (item.id) {
+            R.id.navigation_home -> {
+                title = "弹弹play"
+                switchFragment(TAG_FRAGMENT_HOME)
+            }
+
+            R.id.navigation_media -> {
+                title = "媒体库"
+                switchFragment(TAG_FRAGMENT_MEDIA)
+            }
+
+            R.id.navigation_personal -> {
+                title = "个人中心"
+                switchFragment(TAG_FRAGMENT_PERSONAL)
+            }
+        }
     }
 
     private fun switchFragment(tag: String) {
