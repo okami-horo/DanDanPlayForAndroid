@@ -80,6 +80,11 @@
     <color name="gray_80">#424242</color>
     <color name="gray_90">#212121</color>
 
+    <!-- TV端焦点相关颜色 -->
+    <color name="tv_focus_background">#15000000</color>
+    <color name="tv_focus_background_pressed">#25000000</color>
+    <color name="tv_focus_background_selected">#20000000</color>
+
     <array name="text_colors">
         <item>#ffffff</item>
         <item>#9E9E9E</item>

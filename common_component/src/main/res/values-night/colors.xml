@@ -18,4 +18,9 @@
 
     <!-- 普通layout背景色-浅色 -->
     <color name="layout_bg_color_light">#77212121</color>
+
+    <!-- TV端焦点相关颜色 -->
+    <color name="tv_focus_background">#15ffffff</color>
+    <color name="tv_focus_background_pressed">#25ffffff</color>
+    <color name="tv_focus_background_selected">#20ffffff</color>
 </resources>
