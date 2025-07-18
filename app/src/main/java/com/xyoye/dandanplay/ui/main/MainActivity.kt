@@ -109,6 +109,9 @@ class MainActivity : BaseActivity<MainViewModel, ActivityMainBinding>(),
 
         initScreencastReceive()
 
+        // 自动检查GitHub更新
+        AppUtils.autoCheckGitHubUpdate()
+
         if (UserConfig.isUserLoggedIn()) {
             viewModel.reLogin()
         }

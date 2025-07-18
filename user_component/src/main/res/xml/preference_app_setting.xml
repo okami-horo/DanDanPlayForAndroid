@@ -39,6 +39,34 @@
             app:icon="@drawable/ic_dark_mode_system" />
     </PreferenceCategory>
 
+    <PreferenceCategory android:title="更新设置">
+
+        <Preference
+            android:key="check_github_update"
+            android:title="检查GitHub更新"
+            android:summary="手动检查GitHub Release更新"
+            app:icon="@drawable/ic_app_setting_update" />
+
+        <SwitchPreference
+            android:key="auto_check_update"
+            android:title="自动检查更新"
+            android:summary="应用启动时自动检查更新"
+            app:icon="@drawable/ic_app_setting_auto_update" />
+
+        <SwitchPreference
+            android:key="check_beta_update"
+            android:title="检查Beta版本"
+            android:summary="是否检查测试版本更新"
+            app:icon="@drawable/ic_app_setting_beta" />
+
+        <SwitchPreference
+            android:key="allow_same_version_beta"
+            android:title="重新下载Beta版本"
+            android:summary="允许重新下载相同版本的Beta包"
+            app:icon="@drawable/ic_app_setting_download" />
+
+    </PreferenceCategory>
+
 
     <PreferenceCategory android:title="其它">
         <Preference

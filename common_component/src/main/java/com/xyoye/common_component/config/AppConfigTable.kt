@@ -93,4 +93,24 @@ object AppConfigTable {
     @MMKVFiled
     // Jsoup的User-Agent
     var jsoupUserAgent: String = DefaultConfig.DEFAULT_JSOUP_USER_AGENT
+
+    @MMKVFiled
+    //是否启用自动检查更新
+    var autoCheckUpdate: Boolean = true
+
+    @MMKVFiled
+    //是否检查Beta版本更新
+    var checkBetaUpdate: Boolean = false
+
+    @MMKVFiled
+    //是否允许重新下载相同版本的Beta包
+    var allowSameVersionBeta: Boolean = true
+
+    @MMKVFiled
+    //更新检查间隔（天）
+    var updateCheckInterval: Int = 1
+
+    @MMKVFiled
+    //最后一次检查更新的时间
+    var lastUpdateCheckTime: Long = 0
 }

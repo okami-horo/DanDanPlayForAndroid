@@ -71,6 +71,14 @@ class AppSettingFragment : PreferenceFragmentCompat() {
             }
         }
 
+        // GitHub更新检查
+        findPreference<Preference>("check_github_update")?.apply {
+            setOnPreferenceClickListener {
+                AppUtils.checkGitHubUpdate(requireActivity(), true)
+                return@setOnPreferenceClickListener true
+            }
+        }
+
         findPreference<SwitchPreference>("backup_domain_enable")?.apply {
             setOnPreferenceChangeListener { _, newValue ->
                 backupDomainAddress?.isVisible = newValue as Boolean
@@ -122,6 +130,9 @@ class AppSettingFragment : PreferenceFragmentCompat() {
                 "hide_file" -> AppConfig.isShowHiddenFile()
                 "splash_page" -> AppConfig.isShowSplashAnimation()
                 "backup_domain_enable" -> AppConfig.isBackupDomainEnable()
+                "auto_check_update" -> AppConfig.isAutoCheckUpdate()
+                "check_beta_update" -> AppConfig.isCheckBetaUpdate()
+                "allow_same_version_beta" -> AppConfig.isAllowSameVersionBeta()
                 else -> super.getBoolean(key, defValue)
             }
         }
@@ -131,6 +142,9 @@ class AppSettingFragment : PreferenceFragmentCompat() {
                 "hide_file" -> AppConfig.putShowHiddenFile(value)
                 "splash_page" -> AppConfig.putShowSplashAnimation(value)
                 "backup_domain_enable" -> AppConfig.putBackupDomainEnable(value)
+                "auto_check_update" -> AppConfig.putAutoCheckUpdate(value)
+                "check_beta_update" -> AppConfig.putCheckBetaUpdate(value)
+                "allow_same_version_beta" -> AppConfig.putAllowSameVersionBeta(value)
             }
         }
 

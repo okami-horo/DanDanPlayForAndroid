@@ -12,6 +12,7 @@ import com.xyoye.common_component.network.helper.SignatureInterceptor
 import com.xyoye.common_component.network.service.AlistService
 import com.xyoye.common_component.network.service.DanDanService
 import com.xyoye.common_component.network.service.ExtendedService
+import com.xyoye.common_component.network.service.GitHubService
 import com.xyoye.common_component.network.service.MagnetService
 import com.xyoye.common_component.network.service.RemoteService
 import com.xyoye.common_component.network.service.ScreencastService
@@ -33,6 +34,7 @@ class Retrofit private constructor() {
         val magnetService: MagnetService by lazy { Holder.instance.magnetService }
         val screencastService: ScreencastService by lazy { Holder.instance.screencastService }
         val alistService: AlistService by lazy { Holder.instance.alistService }
+        val gitHubService: GitHubService by lazy { Holder.instance.gitHubService }
     }
 
     private object Holder {
@@ -122,5 +124,14 @@ class Retrofit private constructor() {
             .baseUrl(Api.PLACEHOLDER)
             .build()
             .create(AlistService::class.java)
+    }
+
+    private val gitHubService: GitHubService by lazy {
+        Retrofit.Builder()
+            .addConverterFactory(moshiConverterFactory)
+            .client(commonClient)
+            .baseUrl(Api.PLACEHOLDER)
+            .build()
+            .create(GitHubService::class.java)
     }
 }
