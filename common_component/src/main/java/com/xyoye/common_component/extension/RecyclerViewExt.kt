@@ -54,11 +54,9 @@ fun RecyclerView.requestIndexChildFocus(index: Int): Boolean {
     // 保存当前焦点状态
     val currentFocusedPosition = getCurrentFocusedPosition()
 
-    // 平滑滚动到目标位置
-    smoothScrollToPosition(index)
-
+    // 先尝试直接查找View
     val targetTag = R.string.focusable_item.toResString()
-    val indexView = layoutManager?.findViewByPosition(index)
+    var indexView = layoutManager?.findViewByPosition(index)
     if (indexView != null) {
         val focusableView = indexView.findViewWithTag<View>(targetTag)
         if (focusableView != null && focusableView.isFocusable) {
@@ -67,9 +65,13 @@ fun RecyclerView.requestIndexChildFocus(index: Int): Boolean {
         }
     }
 
+    // 如果View不存在，需要滚动到目标位置
+    // 使用scrollToPosition确保立即滚动，而不是平滑滚动
+    scrollToPosition(index)
+
     // 使用重试机制确保焦点设置成功
     var retryCount = 0
-    val maxRetries = 3
+    val maxRetries = 8  // 进一步增加重试次数
 
     fun tryRequestFocus() {
         if (retryCount >= maxRetries) {
@@ -87,8 +89,15 @@ fun RecyclerView.requestIndexChildFocus(index: Int): Boolean {
             if (focusableView != null && focusableView.isFocusable) {
                 focusableView.requestFocus()
             } else {
-                // 继续重试
-                tryRequestFocus()
+                // 如果View仍然不存在，可能需要强制布局和滚动
+                if (view == null) {
+                    // 强制滚动并请求布局
+                    scrollToPosition(index)
+                    requestLayout()
+                }
+                // 继续重试，使用递增的延迟时间
+                val delay = if (retryCount <= 3) 50L else 100L
+                postDelayed({ tryRequestFocus() }, delay)
             }
         }
     }
