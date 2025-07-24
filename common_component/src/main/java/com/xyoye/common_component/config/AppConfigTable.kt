@@ -113,4 +113,8 @@ object AppConfigTable {
     @MMKVFiled
     //最后一次检查更新的时间
     var lastUpdateCheckTime: Long = 0
+    
+    @MMKVFiled
+    //是否启用GitHub代理
+    var enableGitHubProxy: Boolean = true
 }

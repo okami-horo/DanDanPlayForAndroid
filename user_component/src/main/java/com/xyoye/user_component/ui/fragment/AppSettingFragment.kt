@@ -133,6 +133,7 @@ class AppSettingFragment : PreferenceFragmentCompat() {
                 "auto_check_update" -> AppConfig.isAutoCheckUpdate()
                 "check_beta_update" -> AppConfig.isCheckBetaUpdate()
                 "allow_same_version_beta" -> AppConfig.isAllowSameVersionBeta()
+                "enable_github_proxy" -> AppConfig.isEnableGitHubProxy()
                 else -> super.getBoolean(key, defValue)
             }
         }
@@ -145,6 +146,8 @@ class AppSettingFragment : PreferenceFragmentCompat() {
                 "auto_check_update" -> AppConfig.putAutoCheckUpdate(value)
                 "check_beta_update" -> AppConfig.putCheckBetaUpdate(value)
                 "allow_same_version_beta" -> AppConfig.putAllowSameVersionBeta(value)
+                "enable_github_proxy" -> AppConfig.putEnableGitHubProxy(value)
+                else -> super.putBoolean(key, value)
             }
         }
 

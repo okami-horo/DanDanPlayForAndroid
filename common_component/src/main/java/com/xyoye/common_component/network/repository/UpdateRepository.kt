@@ -1,5 +1,6 @@
 package com.xyoye.common_component.network.repository
 
+import com.xyoye.common_component.config.AppConfig
 import com.xyoye.common_component.network.Retrofit
 import com.xyoye.common_component.network.bean.GitHubReleaseBean
 import com.xyoye.common_component.network.bean.UpdateInfo
@@ -19,6 +20,7 @@ object UpdateRepository : BaseRepository() {
     private const val REPO_OWNER = "okami-horo"
     private const val REPO_NAME = "DanDanPlayForAndroid"
     private const val APK_FILE_EXTENSION = ".apk"
+    private const val GITHUB_PROXY_URL = "https://ghproxy.net/"
     
     /**
      * 检查更新
@@ -146,11 +148,18 @@ object UpdateRepository : BaseRepository() {
             "未知"
         }
         
+        // 为下载URL添加代理加速
+        val downloadUrl = if (AppConfig.isEnableGitHubProxy()) {
+            GITHUB_PROXY_URL + apkAsset.browserDownloadUrl
+        } else {
+            apkAsset.browserDownloadUrl
+        }
+        
         return UpdateInfo(
             versionName = versionName,
             versionCode = generateVersionCode(versionInfo),
             updateContent = release.body ?: "暂无更新说明",
-            downloadUrl = apkAsset.browserDownloadUrl,
+            downloadUrl = downloadUrl,
             fileSize = apkAsset.size,
             isBeta = release.prerelease,
             isForceUpdate = false,

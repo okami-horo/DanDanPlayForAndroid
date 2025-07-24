@@ -64,6 +64,12 @@
             android:title="重新下载Beta版本"
             android:summary="允许重新下载相同版本的Beta包"
             app:icon="@drawable/ic_app_setting_download" />
+        
+        <SwitchPreference
+            android:key="enable_github_proxy"
+            android:title="GitHub下载加速"
+            android:summary="使用镜像代理加速GitHub Release下载"
+            app:icon="@drawable/ic_app_setting_auto_update" />
 
     </PreferenceCategory>
 
