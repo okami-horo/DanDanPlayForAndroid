@@ -41,8 +41,7 @@ object UpdateRepository : BaseRepository() {
                 perPage = 20
             )
         }.run {
-            val response = getOrNull() ?: return@run this
-            val releases = response.body() ?: return@run this
+            val releases = getOrNull() ?: return@run this
             
             val currentVersion = AppUtils.getVersionName()
             val availableUpdate = findAvailableUpdate(
@@ -70,8 +69,7 @@ object UpdateRepository : BaseRepository() {
                 repo = REPO_NAME
             )
         }.run {
-            val response = getOrNull() ?: return@run this
-            val release = response.body() ?: return@run this
+            val release = getOrNull() ?: return@run this
             
             val updateInfo = convertToUpdateInfo(release)
             if (updateInfo != null) {

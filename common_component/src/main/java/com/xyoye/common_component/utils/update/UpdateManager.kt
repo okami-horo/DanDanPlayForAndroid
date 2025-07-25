@@ -6,6 +6,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import androidx.core.content.FileProvider
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.xyoye.common_component.config.AppConfig
 import com.xyoye.common_component.network.bean.UpdateInfo
@@ -85,32 +86,30 @@ object UpdateManager {
         callback: UpdateCheckCallback? = null,
         showNoUpdateToast: Boolean = true
     ) {
-        activity.lifecycleScope.launch {
+        (activity as LifecycleOwner).lifecycleScope.launch {
             try {
                 val includeBeta = AppConfig.isCheckBetaUpdate()
                 val allowSameVersionBeta = AppConfig.isAllowSameVersionBeta()
                 
                 val result = withContext(Dispatchers.IO) {
-                    UpdateRepository.checkUpdate(includeBeta, allowSameVersionBeta)
+                    UpdateRepository.checkUpdate(includeBeta, allowSameVersionBeta) as Result<UpdateInfo?>
                 }
                 
-                result.fold(
-                    onSuccess = { updateInfo ->
-                        if (updateInfo != null) {
-                            callback?.onUpdateAvailable(updateInfo)
-                            showUpdateDialog(activity, updateInfo)
-                        } else {
-                            callback?.onNoUpdate()
-                            if (showNoUpdateToast) {
-                                // TODO: 显示"已是最新版本"的Toast
-                            }
+                if (result.isSuccess) {
+                    val updateInfo = result.getOrNull()
+                    if (updateInfo != null) {
+                        callback?.onUpdateAvailable(updateInfo)
+                        showUpdateDialog(activity, updateInfo)
+                    } else {
+                        callback?.onNoUpdate()
+                        if (showNoUpdateToast) {
+                            // TODO: 显示"已是最新版本"的Toast
                         }
-                    },
-                    onFailure = { error ->
-                        callback?.onCheckFailed(error)
-                        // TODO: 显示检查失败的Toast
                     }
-                )
+                } else {
+                    callback?.onCheckFailed(result.exceptionOrNull() ?: Exception("未知错误"))
+                    // TODO: 显示检查失败的Toast
+                }
             } catch (e: Exception) {
                 callback?.onCheckFailed(e)
                 // TODO: 显示检查失败的Toast
@@ -147,24 +146,22 @@ object UpdateManager {
                 val includeBeta = AppConfig.isCheckBetaUpdate()
                 val allowSameVersionBeta = AppConfig.isAllowSameVersionBeta()
                 
-                val result = UpdateRepository.checkUpdate(includeBeta, allowSameVersionBeta)
+                val result = UpdateRepository.checkUpdate(includeBeta, allowSameVersionBeta) as Result<UpdateInfo?>
                 
-                result.fold(
-                    onSuccess = { updateInfo ->
-                        // 更新最后检查时间
-                        AppConfig.putLastUpdateCheckTime(currentTime)
-                        
-                        if (updateInfo != null) {
-                            callback?.onUpdateAvailable(updateInfo)
-                            // 自动检查发现更新时，可以选择显示通知或其他提示方式
-                        } else {
-                            callback?.onNoUpdate()
-                        }
-                    },
-                    onFailure = { error ->
-                        callback?.onCheckFailed(error)
+                if (result.isSuccess) {
+                    // 更新最后检查时间
+                    AppConfig.putLastUpdateCheckTime(currentTime)
+                    
+                    val updateInfo = result.getOrNull()
+                    if (updateInfo != null) {
+                        callback?.onUpdateAvailable(updateInfo)
+                        // 自动检查发现更新时，可以选择显示通知或其他提示方式
+                    } else {
+                        callback?.onNoUpdate()
                     }
-                )
+                } else {
+                    callback?.onCheckFailed(result.exceptionOrNull() ?: Exception("未知错误"))
+                }
             } catch (e: Exception) {
                 callback?.onCheckFailed(e)
             }
