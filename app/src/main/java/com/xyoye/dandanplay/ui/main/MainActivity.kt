@@ -19,6 +19,7 @@ import com.xyoye.common_component.extension.hideFragment
 import com.xyoye.common_component.extension.showFragment
 import com.xyoye.common_component.services.ScreencastProvideService
 import com.xyoye.common_component.services.ScreencastReceiveService
+import com.xyoye.common_component.utils.AppUtils
 import com.xyoye.common_component.utils.tv.TvKeyEventHelper
 import com.xyoye.common_component.weight.ToastCenter
 import com.xyoye.common_component.weight.dialog.CommonDialog
