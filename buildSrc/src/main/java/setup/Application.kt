@@ -21,11 +21,6 @@ fun Project.applicationSetup() {
             dataBinding.isEnabled = true
         }
 
-        // 添加BuildConfig字段支持弹弹play认证信息
-        defaultConfig {
-            buildConfigField("String", "DANDANPLAY_APP_ID", "\"${System.getenv("DANDANPLAY_APP_ID") ?: ""}\"")
-            buildConfigField("String", "DANDANPLAY_APP_SECRET", "\"${System.getenv("DANDANPLAY_APP_SECRET") ?: ""}\"")
-        }
 
         setupKotlinOptions()
         setupSignConfigs(this@applicationSetup)

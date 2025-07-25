@@ -14,11 +14,11 @@ object DevelopConfigTable {
 
     // AppId
     @MMKVFiled
-    const val appId = com.xyoye.dandanplay.BuildConfig.DANDANPLAY_APP_ID
+    const val appId = "{{APP_ID}}"
 
     // App Secret
     @MMKVFiled
-    const val appSecret = com.xyoye.dandanplay.BuildConfig.DANDANPLAY_APP_SECRET
+    const val appSecret = "{{APP_SECRET}}"
 
     // 是否已自动显示认证弹窗
     @MMKVFiled
