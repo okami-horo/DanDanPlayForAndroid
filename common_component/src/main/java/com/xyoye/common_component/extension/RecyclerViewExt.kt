@@ -65,17 +65,23 @@ fun RecyclerView.requestIndexChildFocus(index: Int): Boolean {
         }
     }
 
-    // 如果View不存在，需要滚动到目标位置
-    // 使用scrollToPosition确保立即滚动，而不是平滑滚动
-    scrollToPosition(index)
+    // 如果View不存在，使用平滑滚动到目标位置
+    val useSmoothScroll = true
+    if (useSmoothScroll) {
+        smoothScrollToPosition(index)
+    } else {
+        scrollToPosition(index)
+    }
 
-    // 使用重试机制确保焦点设置成功
+    // 优化的重试机制
     var retryCount = 0
-    val maxRetries = 8  // 进一步增加重试次数
+    val maxRetries = 8
+    val baseDelay = 50L
+    val maxDelay = 200L
 
     fun tryRequestFocus() {
         if (retryCount >= maxRetries) {
-            // 如果多次重试失败，恢复到之前的焦点位置
+            // 重试失败，恢复到之前的焦点位置
             if (currentFocusedPosition != -1 && currentFocusedPosition != index) {
                 post { requestIndexChildFocus(currentFocusedPosition) }
             }
@@ -83,26 +89,40 @@ fun RecyclerView.requestIndexChildFocus(index: Int): Boolean {
         }
 
         retryCount++
+        
+        // 使用指数退避策略，延迟时间递增但不超过最大值
+        val delay = minOf(baseDelay * retryCount, maxDelay)
+        
         post {
             val view = layoutManager?.findViewByPosition(index)
             val focusableView = view?.findViewWithTag<View>(targetTag)
+            
             if (focusableView != null && focusableView.isFocusable) {
+                // 成功找到可聚焦的View
                 focusableView.requestFocus()
             } else {
-                // 如果View仍然不存在，可能需要强制布局和滚动
+                // 继续重试，确保View已创建
                 if (view == null) {
-                    // 强制滚动并请求布局
-                    scrollToPosition(index)
+                    // View可能还未创建，强制布局计算
+                    layoutManager?.let { lm ->
+                        if (lm is LinearLayoutManager) {
+                            lm.scrollToPositionWithOffset(index, 0)
+                        } else {
+                            scrollToPosition(index)
+                        }
+                    }
                     requestLayout()
                 }
-                // 继续重试，使用递增的延迟时间
-                val delay = if (retryCount <= 3) 50L else 100L
+                
+                // 继续重试
                 postDelayed({ tryRequestFocus() }, delay)
             }
         }
     }
 
-    tryRequestFocus()
+    // 延迟开始重试，给滚动动画留出时间
+    val initialDelay = if (useSmoothScroll) 150L else 50L
+    postDelayed({ tryRequestFocus() }, initialDelay)
     return true
 }
 
