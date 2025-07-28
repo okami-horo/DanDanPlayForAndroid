@@ -159,6 +159,13 @@ class MainActivity : BaseActivity<MainViewModel, ActivityMainBinding>(),
                         if (currentPos > 0) {
                             tvNavigationAdapter.setSelectedPosition(currentPos - 1)
                             tvNavigationRv.scrollToPosition(currentPos - 1)
+                            tvNavigationRv.post {
+                                val viewHolder = tvNavigationRv.findViewHolderForAdapterPosition(currentPos - 1)
+                                viewHolder?.itemView?.requestFocus()
+                            }
+                            return true
+                        } else {
+                            // 已在顶部，消费事件但不移动焦点
                             return true
                         }
                     }
@@ -167,6 +174,13 @@ class MainActivity : BaseActivity<MainViewModel, ActivityMainBinding>(),
                         if (currentPos < tvNavigationItems.size - 1) {
                             tvNavigationAdapter.setSelectedPosition(currentPos + 1)
                             tvNavigationRv.scrollToPosition(currentPos + 1)
+                            tvNavigationRv.post {
+                                val viewHolder = tvNavigationRv.findViewHolderForAdapterPosition(currentPos + 1)
+                                viewHolder?.itemView?.requestFocus()
+                            }
+                            return true
+                        } else {
+                            // 已在底部，消费事件但不移动焦点
                             return true
                         }
                     }
@@ -271,6 +285,18 @@ class MainActivity : BaseActivity<MainViewModel, ActivityMainBinding>(),
                 post {
                     requestFocus()
                     tvNavigationAdapter.setSelectedPosition(1) // 媒体库位置
+                    // 确保第一个可见的项目获得焦点
+                    val firstVisibleView = getChildAt(0)
+                    firstVisibleView?.requestFocus()
+                }
+                
+                // 添加焦点变化监听器，确保焦点不会意外丢失
+                setOnFocusChangeListener { _, hasFocus ->
+                    if (hasFocus) {
+                        val currentPos = tvNavigationAdapter.getSelectedPosition()
+                        val viewHolder = findViewHolderForAdapterPosition(currentPos)
+                        viewHolder?.itemView?.requestFocus()
+                    }
                 }
             }
         }
