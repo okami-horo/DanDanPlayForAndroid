@@ -13,23 +13,17 @@ import com.xyoye.common_component.utils.update.UpdateManager
 
 object AppUtils {
     fun getVersionCode(): Long {
-        if (SecurityHelper.getInstance().isOfficialApplication) {
-            val packageName = BaseApplication.getAppContext().applicationInfo.packageName
-            val packageInfo =
-                BaseApplication.getAppContext().packageManager.getPackageInfo(packageName, 0)
-            return PackageInfoCompat.getLongVersionCode(packageInfo)
-        }
-        return 0L
+        val packageName = BaseApplication.getAppContext().applicationInfo.packageName
+        val packageInfo =
+            BaseApplication.getAppContext().packageManager.getPackageInfo(packageName, 0)
+        return PackageInfoCompat.getLongVersionCode(packageInfo)
     }
 
     fun getVersionName(): String {
-        if (SecurityHelper.getInstance().isOfficialApplication) {
-            val packageName = BaseApplication.getAppContext().applicationInfo.packageName
-            val packageInfo =
-                BaseApplication.getAppContext().packageManager.getPackageInfo(packageName, 0)
-            return packageInfo.versionName
-        }
-        return "unknown"
+        val packageName = BaseApplication.getAppContext().applicationInfo.packageName
+        val packageInfo =
+            BaseApplication.getAppContext().packageManager.getPackageInfo(packageName, 0)
+        return packageInfo.versionName
     }
 
     fun checkUpdate() {
