@@ -70,7 +70,9 @@ jobs:
       - name: setup build version
         run: |
           apk_version=`egrep -o "[0-9].[0-9].[0-9]" buildSrc/src/main/java/Versions.kt`
+          short_sha=`echo ${{ github.sha }} | cut -c1-7`
           echo "BUILD_VERSION=$apk_version" >> $GITHUB_ENV
+          echo "SHORT_SHA=$short_sha" >> $GITHUB_ENV
 
       # 7.移动文件到根目录
       - name: move file
@@ -87,8 +89,8 @@ jobs:
         id: generate_release
         uses: softprops/action-gh-release@v1
         with:
-          name: 弹弹play概念版 v${{ env.BUILD_VERSION }} Beta
-          tag_name: dandanplay-v${{ env.BUILD_VERSION }}-beta
+          name: 弹弹play概念版 v${{ env.BUILD_VERSION }} Beta (${{ env.SHORT_SHA }})
+          tag_name: dandanplay-v${{ env.BUILD_VERSION }}-beta-${{ github.run_number }}-${{ env.SHORT_SHA }}
           body: |
             🚀 **测试版本构建**
 
@@ -96,6 +98,7 @@ jobs:
             **构建说明**: ${{ github.event.inputs.build_note || '最新测试包，非master分支代码构建' }}
             **构建时间**: ${{ github.run_id }}
             **触发方式**: ${{ github.event_name == 'workflow_dispatch' && '手动触发' || '自动触发' }}
+            **提交SHA**: ${{ env.SHORT_SHA }}
 
             > 这是一个预发布版本，仅用于测试目的
           prerelease: true
