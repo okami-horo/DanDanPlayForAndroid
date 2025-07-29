@@ -55,8 +55,44 @@ class MediaFragment : BaseFragment<MediaViewModel, FragmentMediaBinding>() {
             showAddStorageDialog()
         }
 
+        // 设置加号按钮的焦点导航
+        dataBinding.addMediaStorageBt.setOnKeyListener { _, keyCode, event ->
+            if (event?.action != KeyEvent.ACTION_DOWN) {
+                return@setOnKeyListener false
+            }
+            
+            when (keyCode) {
+                KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_LEFT -> {
+                    // 从加号按钮回到列表
+                    val mediaLibList = viewModel.mediaLibWithStatusLiveData.value ?: emptyList()
+                    if (mediaLibList.isNotEmpty()) {
+                        dataBinding.mediaLibRv.requestFocus()
+                        // 将焦点设置到列表的最后一项
+                        val lastPosition = mediaLibList.size - 1
+                        dataBinding.mediaLibRv.post {
+                            TvFocusManager.restoreFocusState(
+                                "${this::class.java.simpleName}_${dataBinding.mediaLibRv.id}",
+                                dataBinding.mediaLibRv,
+                                lastPosition
+                            )
+                        }
+                        return@setOnKeyListener true
+                    }
+                    false
+                }
+                else -> false
+            }
+        }
+
         viewModel.mediaLibWithStatusLiveData.observe(this) {
             dataBinding.mediaLibRv.setData(it)
+            
+            // 当列表为空时，让加号按钮获得焦点
+            if (it.isEmpty()) {
+                dataBinding.addMediaStorageBt.post {
+                    dataBinding.addMediaStorageBt.requestFocus()
+                }
+            }
         }
     }
 
@@ -87,6 +123,20 @@ class MediaFragment : BaseFragment<MediaViewModel, FragmentMediaBinding>() {
         // 处理RecyclerView的方向键导航
         if (TvKeyEventHelper.isTvDirectionKey(keyCode)) {
             val mediaLibList = viewModel.mediaLibWithStatusLiveData.value ?: emptyList()
+            
+            // 处理向下键，当到达最后一项时移动到加号按钮
+            if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+                val layoutManager = dataBinding.mediaLibRv.layoutManager as androidx.recyclerview.widget.LinearLayoutManager
+                val lastVisiblePosition = layoutManager.findLastCompletelyVisibleItemPosition()
+                val itemCount = mediaLibList.size
+                
+                if (lastVisiblePosition == itemCount - 1 || itemCount == 0) {
+                    // 已经到达最后一项或列表为空，移动到加号按钮
+                    dataBinding.addMediaStorageBt.requestFocus()
+                    return true
+                }
+            }
+            
             return TvKeyEventHelper.handleRecyclerViewKeyEvent(
                 dataBinding.mediaLibRv,
                 keyCode,
