@@ -84,7 +84,27 @@ jobs:
             mv app/build/outputs/apk/${{ env.BUILD_TYPE }}/${file_name} $file_name
           done
 
-      # 8.创建Release
+      # 8.删除相同版本的旧beta包
+      - name: delete old beta releases
+        run: |
+          # 安装jq工具
+          sudo apt-get update && sudo apt-get install -y jq
+          
+          # 获取相同版本号的旧beta发布（排除即将创建的新发布）
+          old_releases=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/releases" \
+            | jq -r '.[] | select(.tag_name | startswith("dandanplay-v${{ env.BUILD_VERSION }}-beta")) | .id' | head -n -1)
+          
+          # 删除旧发布（保留最新的一个）
+          for release_id in $old_releases; do
+            if [ ! -z "$release_id" ]; then
+              echo "删除旧beta发布: $release_id"
+              curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                "https://api.github.com/repos/${{ github.repository }}/releases/$release_id"
+            fi
+          done
+
+      # 9.创建Release
       - name: generate release
         id: generate_release
         uses: softprops/action-gh-release@v1
