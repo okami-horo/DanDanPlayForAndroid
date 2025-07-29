@@ -105,6 +105,35 @@ class PlayerTopView(
 
     }
 
+    override fun onSeekPreviewStarted(position: Long) {
+        // 预览模式下始终显示顶部栏
+        ViewCompat.animate(viewBinding.playerTopLl).translationY(0f).setDuration(300).start()
+        
+        // 更新系统时间
+        viewBinding.systemTimeTv.text = java.util.Date().toText("HH:mm")
+        
+        // 标题获得焦点
+        viewBinding.videoTitleTv.requestFocus()
+    }
+
+    override fun onSeekPreviewChanged(position: Long, adjustmentText: String) {
+        // 预览模式下保持顶部栏显示
+        ViewCompat.animate(viewBinding.playerTopLl).translationY(0f).setDuration(300).start()
+        
+        // 更新系统时间
+        viewBinding.systemTimeTv.text = java.util.Date().toText("HH:mm")
+    }
+
+    override fun onSeekPreviewFinished(finalPosition: Long) {
+        // 恢复正常的顶部栏显示状态
+        if (!mControlWrapper.isControllerShowing()) {
+            val height = viewBinding.playerTopLl.height.toFloat()
+            ViewCompat.animate(viewBinding.playerTopLl).translationY(-height)
+                .setDuration(300)
+                .start()
+        }
+    }
+
     fun setBatteryHelper(helper: BatteryHelper) {
         helper.bindBatteryView(viewBinding.batteryView)
     }

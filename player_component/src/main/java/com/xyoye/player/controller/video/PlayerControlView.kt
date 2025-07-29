@@ -72,6 +72,32 @@ class PlayerControlView(context: Context): InterControllerView {
 
     }
 
+    override fun onSeekPreviewStarted(position: Long) {
+        // 预览模式下隐藏截图按钮，显示锁定按钮
+        updateLockVisible(true)
+        updateShotVisible(false)
+        
+        // 锁定按钮获得焦点
+        viewBinding.playerLockIv.postDelayed({
+            viewBinding.playerLockIv.requestFocus()
+        }, 100)
+    }
+
+    override fun onSeekPreviewChanged(position: Long, adjustmentText: String) {
+        // 预览模式下保持按钮状态
+        updateLockVisible(true)
+        updateShotVisible(false)
+    }
+
+    override fun onSeekPreviewFinished(finalPosition: Long) {
+        // 恢复正常的按钮显示状态
+        val isVisible = !mControlWrapper.isControllerShowing()
+        updateLockVisible(isVisible)
+        if (mControlWrapper.isLocked().not()) {
+            updateShotVisible(isVisible)
+        }
+    }
+
     fun showMessage(text: String, time: MessageTime) {
         viewBinding.messageContainer.showMessage(text, time)
     }

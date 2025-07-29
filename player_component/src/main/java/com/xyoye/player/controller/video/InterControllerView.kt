@@ -29,4 +29,23 @@ interface InterControllerView {
     fun onPopupModeChanged(isPopup: Boolean) {}
 
     fun onTrackChanged(type: TrackType) {}
+
+    /**
+     * 当遥控器快进快退预览开始时调用
+     * @param position 当前预览位置
+     */
+    fun onSeekPreviewStarted(position: Long) {}
+
+    /**
+     * 当遥控器快进快退预览位置变化时调用
+     * @param position 新的预览位置
+     * @param adjustmentText 调整提示文本（如"+30秒"）
+     */
+    fun onSeekPreviewChanged(position: Long, adjustmentText: String) {}
+
+    /**
+     * 当遥控器快进快退预览结束时调用
+     * @param finalPosition 最终确认的位置，如果取消则为-1
+     */
+    fun onSeekPreviewFinished(finalPosition: Long) {}
 }

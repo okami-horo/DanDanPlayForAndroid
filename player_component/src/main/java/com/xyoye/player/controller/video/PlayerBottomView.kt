@@ -193,6 +193,71 @@ class PlayerBottomView(
 
     }
 
+    override fun onSeekPreviewStarted(position: Long) {
+        // 显示进度条预览状态
+        viewBinding.playSeekBar.isEnabled = false
+        viewBinding.playSeekBar.requestFocus()
+        
+        // 高亮显示进度条
+        val highlightColor = R.color.text_theme.toResColor()
+        viewBinding.playSeekBar.progressDrawable.colorFilter = 
+            BlendModeColorFilterCompat.createBlendModeColorFilterCompat(
+                highlightColor, BlendModeCompat.SRC_IN
+            )
+        
+        // 更新预览位置显示
+        val duration = mControlWrapper.getDuration()
+        if (duration > 0) {
+            val progress = (position.toFloat() / duration * viewBinding.playSeekBar.max).toInt()
+            viewBinding.playSeekBar.progress = progress
+            viewBinding.currentPositionTv.text = formatDuration(position)
+        }
+    }
+
+    override fun onSeekPreviewChanged(position: Long, adjustmentText: String) {
+        // 更新预览进度条位置
+        val duration = mControlWrapper.getDuration()
+        if (duration > 0) {
+            val progress = (position.toFloat() / duration * viewBinding.playSeekBar.max).toInt()
+            viewBinding.playSeekBar.progress = progress
+            viewBinding.currentPositionTv.text = formatDuration(position)
+        }
+        
+        // 显示调整提示
+        ToastCenter.showOriginalToast(adjustmentText)
+    }
+
+    override fun onSeekPreviewFinished(finalPosition: Long) {
+        // 恢复进度条正常状态
+        viewBinding.playSeekBar.isEnabled = true
+        
+        // 恢复进度条颜色
+        val normalColor = R.color.text_gray.toResColor()
+        viewBinding.playSeekBar.progressDrawable.colorFilter = 
+            BlendModeColorFilterCompat.createBlendModeColorFilterCompat(
+                normalColor, BlendModeCompat.SRC_IN
+            )
+        
+        if (finalPosition >= 0) {
+            // 确认跳转
+            val duration = mControlWrapper.getDuration()
+            if (duration > 0) {
+                val progress = (finalPosition.toFloat() / duration * viewBinding.playSeekBar.max).toInt()
+                viewBinding.playSeekBar.progress = progress
+                viewBinding.currentPositionTv.text = formatDuration(finalPosition)
+            }
+        } else {
+            // 取消预览，恢复当前位置
+            val currentPosition = mControlWrapper.getCurrentPosition()
+            val duration = mControlWrapper.getDuration()
+            if (duration > 0) {
+                val progress = (currentPosition.toFloat() / duration * viewBinding.playSeekBar.max).toInt()
+                viewBinding.playSeekBar.progress = progress
+                viewBinding.currentPositionTv.text = formatDuration(currentPosition)
+            }
+        }
+    }
+
     override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
         if (!fromUser)
             return

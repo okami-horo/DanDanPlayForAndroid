@@ -13,3 +13,5 @@ keystore.properties
 .cursor/
 .lingma/rules/build.md
 BUGLY_INTEGRATION.md
+.trae
+docs/
