@@ -159,14 +159,34 @@ class PlayHistoryActivity : BaseActivity<PlayHistoryViewModel, ActivityPlayHisto
         if (TvKeyEventHelper.isTvDirectionKey(keyCode)) {
             val historyList = viewModel.historyLiveData.value ?: emptyList()
             
-            // 处理向下键，当到达最后一项时移动到加号按钮
-            if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+            // 如果列表为空，直接处理
+            if (historyList.isEmpty()) {
+                if (dataBinding.addLinkBt.isVisible) {
+                    when (keyCode) {
+                        KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_DPAD_UP -> {
+                            dataBinding.addLinkBt.requestFocus()
+                            return true
+                        }
+                    }
+                }
+                return false
+            }
+            
+            // 先让RecyclerView正常处理按键事件
+            val handledByRecyclerView = TvKeyEventHelper.handleRecyclerViewKeyEvent(
+                dataBinding.playHistoryRv,
+                keyCode,
+                historyList
+            )
+            
+            // 如果RecyclerView没有处理（到达边界），再检查是否需要移动到添加按钮
+            if (!handledByRecyclerView && keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
                 val layoutManager = dataBinding.playHistoryRv.layoutManager as androidx.recyclerview.widget.LinearLayoutManager
-                val lastVisiblePosition = layoutManager.findLastCompletelyVisibleItemPosition()
+                val lastVisiblePosition = layoutManager.findLastVisibleItemPosition()
                 val itemCount = historyList.size
                 
-                if (lastVisiblePosition == itemCount - 1 || itemCount == 0) {
-                    // 已经到达最后一项或列表为空，移动到加号按钮
+                // 检查是否已经到达最后一项且无法继续向下滚动
+                if (lastVisiblePosition >= itemCount - 1) {
                     if (dataBinding.addLinkBt.isVisible) {
                         dataBinding.addLinkBt.requestFocus()
                         return true
@@ -174,19 +194,7 @@ class PlayHistoryActivity : BaseActivity<PlayHistoryViewModel, ActivityPlayHisto
                 }
             }
             
-            // 如果列表为空，让加号按钮获得焦点
-            if (historyList.isEmpty() && dataBinding.addLinkBt.isVisible) {
-                if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN || keyCode == KeyEvent.KEYCODE_DPAD_UP) {
-                    dataBinding.addLinkBt.requestFocus()
-                    return true
-                }
-            }
-            
-            return TvKeyEventHelper.handleRecyclerViewKeyEvent(
-                dataBinding.playHistoryRv,
-                keyCode,
-                historyList
-            )
+            return handledByRecyclerView
         }
 
         return false
