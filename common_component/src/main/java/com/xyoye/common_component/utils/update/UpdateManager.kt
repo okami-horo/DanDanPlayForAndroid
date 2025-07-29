@@ -13,6 +13,7 @@ import com.xyoye.common_component.network.bean.UpdateInfo
 import com.xyoye.common_component.network.repository.UpdateRepository
 import com.xyoye.common_component.utils.AppUtils
 import com.xyoye.common_component.utils.VersionUtils
+import com.xyoye.common_component.weight.ToastCenter
 import com.xyoye.common_component.weight.dialog.GitHubUpdateDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -98,21 +99,25 @@ object UpdateManager {
                 if (result.isSuccess) {
                     val updateInfo = result.getOrNull()
                     if (updateInfo != null) {
-                        callback?.onUpdateAvailable(updateInfo)
-                        showUpdateDialog(activity, updateInfo)
-                    } else {
-                        callback?.onNoUpdate()
-                        if (showNoUpdateToast) {
-                            // TODO: 显示"已是最新版本"的Toast
-                        }
+                    callback?.onUpdateAvailable(updateInfo)
+                    showUpdateDialog(activity, updateInfo)
+                } else {
+                    callback?.onNoUpdate()
+                    if (showNoUpdateToast) {
+                        ToastCenter.showToast("已是最新版本")
                     }
+                }
                 } else {
                     callback?.onCheckFailed(result.exceptionOrNull() ?: Exception("未知错误"))
-                    // TODO: 显示检查失败的Toast
+                    if (showNoUpdateToast) {
+                        ToastCenter.showToast("检查更新失败，请稍后重试")
+                    }
                 }
             } catch (e: Exception) {
                 callback?.onCheckFailed(e)
-                // TODO: 显示检查失败的Toast
+                if (showNoUpdateToast) {
+                    ToastCenter.showToast("检查更新失败，请稍后重试")
+                }
             }
         }
     }

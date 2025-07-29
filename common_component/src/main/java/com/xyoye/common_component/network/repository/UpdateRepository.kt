@@ -119,6 +119,13 @@ object UpdateRepository : BaseRepository() {
             if (VersionUtils.isNewerVersion(currentVersion, releaseVersion)) {
                 return updateInfo
             }
+            
+            // 如果允许相同版本Beta包下载，且当前版本是Beta版本，且版本号相同
+            if (allowSameVersionBeta && release.prerelease && 
+                VersionUtils.isBetaVersion(currentVersion) &&
+                currentVersion == releaseVersion) {
+                return updateInfo
+            }
         }
         
         return null
