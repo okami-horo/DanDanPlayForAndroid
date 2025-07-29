@@ -7,6 +7,7 @@ import com.alibaba.android.arouter.launcher.ARouter
 import com.alibaba.sdk.android.feedback.impl.FeedbackAPI
 import android.view.KeyEvent
 import android.view.View
+import android.view.ViewGroup
 import com.xyoye.common_component.base.BaseFragment
 import com.xyoye.common_component.bridge.LoginObserver
 import com.xyoye.common_component.bridge.ServiceLifecycleBridge
@@ -232,10 +233,12 @@ class PersonalFragment : BaseFragment<PersonalFragmentViewModel, FragmentPersona
             dataBinding.commonlyManagerLl,
             dataBinding.bilibiliDanmuLl,
             dataBinding.shooterSubtitleLl,
-            dataBinding.screencastReceiverLl
+            dataBinding.screencastReceiverLl,
+            dataBinding.feedbackLl,
+            dataBinding.appSettingLl
         )
 
-        // 设置焦点顺序
+        // 设置焦点顺序 - 垂直方向
         for (i in 0 until focusableViews.size - 1) {
             focusableViews[i].nextFocusDownId = focusableViews[i + 1].id
             focusableViews[i + 1].nextFocusUpId = focusableViews[i].id
@@ -246,6 +249,39 @@ class PersonalFragment : BaseFragment<PersonalFragmentViewModel, FragmentPersona
             view.nextFocusLeftId = view.id
             view.nextFocusRightId = view.id
         }
+
+        // 特殊处理横向布局中的焦点关系
+        if (resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE) {
+            // 横向布局下的特殊焦点处理
+            dataBinding.followAnimeLl.nextFocusRightId = dataBinding.cloudHistoryLl.id
+            dataBinding.cloudHistoryLl.nextFocusLeftId = dataBinding.followAnimeLl.id
+            
+            // 设置用户头像的下一个焦点
+            dataBinding.userCoverIv.nextFocusDownId = dataBinding.followAnimeLl.id
+            dataBinding.userCoverIv.nextFocusRightId = dataBinding.followAnimeLl.id
+        }
+
+        // 确保所有可点击视图都可聚焦
+        focusableViews.forEach { view ->
+            view.isFocusable = true
+            view.isFocusableInTouchMode = true
+            
+            // 设置TV端焦点高亮效果
+            TvFocusHandler.setupFocusListener(view)
+            
+            // 设置按键监听器
+            view.setOnKeyListener { v, keyCode, event ->
+                TvFocusHandler.handleKeyEvent(v, keyCode, event, focusableViews)
+            }
+        }
+
+        // 处理NestedScrollView的焦点，确保可以滚动
+        dataBinding.root.let { rootView ->
+            rootView.isFocusable = true
+            if (rootView is ViewGroup) {
+                rootView.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+            }
+        }
     }
 
     /**
@@ -254,11 +290,29 @@ class PersonalFragment : BaseFragment<PersonalFragmentViewModel, FragmentPersona
     private fun saveTvFocus() {
         val focusedView = dataBinding.root.findFocus()
         if (focusedView != null) {
-            val focusKey = "${this::class.java.simpleName}_personal_focus"
-            requireContext().getSharedPreferences("tv_focus", 0)
-                .edit()
-                .putInt(focusKey, focusedView.id)
-                .apply()
+            val focusableViews = listOf(
+                dataBinding.userCoverIv,
+                dataBinding.followAnimeLl,
+                dataBinding.cloudHistoryLl,
+                dataBinding.playerSettingLl,
+                dataBinding.scanManagerLl,
+                dataBinding.cacheManagerLl,
+                dataBinding.commonlyManagerLl,
+                dataBinding.bilibiliDanmuLl,
+                dataBinding.shooterSubtitleLl,
+                dataBinding.screencastReceiverLl,
+                dataBinding.feedbackLl,
+                dataBinding.appSettingLl
+            )
+            
+            val focusIndex = focusableViews.indexOfFirst { it.id == focusedView.id }
+            if (focusIndex != -1) {
+                val focusKey = "${this::class.java.simpleName}_personal_focus_index"
+                requireContext().getSharedPreferences("tv_focus", 0)
+                    .edit()
+                    .putInt(focusKey, focusIndex)
+                    .apply()
+            }
         }
     }
 
@@ -266,13 +320,29 @@ class PersonalFragment : BaseFragment<PersonalFragmentViewModel, FragmentPersona
      * 恢复TV端焦点状态
      */
     private fun restoreTvFocus() {
-        val focusKey = "${this::class.java.simpleName}_personal_focus"
+        val focusKey = "${this::class.java.simpleName}_personal_focus_index"
         dataBinding.root.post {
-            val savedFocusId = requireContext().getSharedPreferences("tv_focus", 0)
-                .getInt(focusKey, dataBinding.userCoverIv.id)
+            val savedFocusIndex = requireContext().getSharedPreferences("tv_focus", 0)
+                .getInt(focusKey, 0)
             
-            val targetView = dataBinding.root.findViewById<View>(savedFocusId)
-            targetView?.requestFocus() ?: run {
+            val focusableViews = listOf(
+                dataBinding.userCoverIv,
+                dataBinding.followAnimeLl,
+                dataBinding.cloudHistoryLl,
+                dataBinding.playerSettingLl,
+                dataBinding.scanManagerLl,
+                dataBinding.cacheManagerLl,
+                dataBinding.commonlyManagerLl,
+                dataBinding.bilibiliDanmuLl,
+                dataBinding.shooterSubtitleLl,
+                dataBinding.screencastReceiverLl,
+                dataBinding.feedbackLl,
+                dataBinding.appSettingLl
+            )
+            
+            if (savedFocusIndex in 0 until focusableViews.size) {
+                focusableViews[savedFocusIndex].requestFocus()
+            } else {
                 // 默认聚焦到第一个可聚焦元素
                 dataBinding.userCoverIv.requestFocus()
             }

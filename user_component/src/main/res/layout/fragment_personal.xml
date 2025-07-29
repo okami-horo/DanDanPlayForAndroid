@@ -190,7 +190,11 @@
                     android:background="@drawable/background_item_press_corner"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:padding="12dp">
+                    android:padding="12dp"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:nextFocusLeft="@id/scan_manager_ll"
+                    android:nextFocusRight="@id/scan_manager_ll">
 
                     <ImageView
                         android:layout_width="40dp"
@@ -406,7 +410,11 @@
                     android:background="@drawable/background_item_press_corner"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:padding="12dp">
+                    android:padding="12dp"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:nextFocusLeft="@id/feedback_ll"
+                    android:nextFocusRight="@id/feedback_ll">
 
                     <ImageView
                         android:layout_width="40dp"
@@ -432,7 +440,11 @@
                     android:background="@drawable/background_item_press_corner"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:padding="12dp">
+                    android:padding="12dp"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:nextFocusLeft="@id/app_setting_ll"
+                    android:nextFocusRight="@id/app_setting_ll">
 
                     <ImageView
                         android:layout_width="40dp"
