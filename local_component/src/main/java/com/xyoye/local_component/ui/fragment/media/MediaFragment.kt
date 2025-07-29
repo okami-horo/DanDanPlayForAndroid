@@ -13,6 +13,7 @@ import com.xyoye.common_component.config.RouteTable
 import com.xyoye.common_component.extension.deletable
 import com.xyoye.common_component.extension.setData
 import com.xyoye.common_component.extension.vertical
+import com.xyoye.common_component.extension.requestIndexChildFocus
 import com.xyoye.common_component.services.ScreencastProvideService
 import com.xyoye.common_component.utils.tv.TvFocusManager
 import com.xyoye.common_component.utils.tv.TvKeyEventHelper
@@ -70,11 +71,7 @@ class MediaFragment : BaseFragment<MediaViewModel, FragmentMediaBinding>() {
                         // 将焦点设置到列表的最后一项
                         val lastPosition = mediaLibList.size - 1
                         dataBinding.mediaLibRv.post {
-                            TvFocusManager.restoreFocusState(
-                                "${this::class.java.simpleName}_${dataBinding.mediaLibRv.id}",
-                                dataBinding.mediaLibRv,
-                                lastPosition
-                            )
+                            dataBinding.mediaLibRv.requestIndexChildFocus(lastPosition)
                         }
                         return@setOnKeyListener true
                     }
