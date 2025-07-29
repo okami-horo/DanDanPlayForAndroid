@@ -45,6 +45,8 @@
                         android:layout_height="80dp"
                         android:src="@drawable/ic_dongfangbubai"
                         android:transitionName="user_cover_image"
+                        android:focusable="true"
+                        android:focusableInTouchMode="true"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />
 
@@ -85,6 +87,8 @@
                     android:gravity="center_horizontal"
                     android:orientation="vertical"
                     android:padding="15dp"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
                     app:layout_constraintEnd_toStartOf="@+id/cloud_history_ll"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/user_account_cl">
@@ -114,6 +118,8 @@
                     android:gravity="center_horizontal"
                     android:orientation="vertical"
                     android:padding="15dp"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toEndOf="@id/follow_anime_ll"
                     app:layout_constraintTop_toTopOf="@id/follow_anime_ll">
@@ -154,7 +160,11 @@
                     android:background="@drawable/background_item_press_corner"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:padding="12dp">
+                    android:padding="12dp"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:nextFocusLeft="@id/player_setting_ll"
+                    android:nextFocusRight="@id/player_setting_ll">
 
                     <ImageView
                         android:layout_width="40dp"
@@ -206,7 +216,11 @@
                     android:background="@drawable/background_item_press_corner"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:padding="12dp">
+                    android:padding="12dp"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:nextFocusLeft="@id/cache_manager_ll"
+                    android:nextFocusRight="@id/cache_manager_ll">
 
                     <ImageView
                         android:layout_width="40dp"
@@ -232,7 +246,11 @@
                     android:background="@drawable/background_item_press_corner"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:padding="12dp">
+                    android:padding="12dp"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:nextFocusLeft="@id/commonly_manager_ll"
+                    android:nextFocusRight="@id/commonly_manager_ll">
 
                     <ImageView
                         android:layout_width="40dp"
@@ -269,7 +287,11 @@
                     android:background="@drawable/background_item_press_corner"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:padding="12dp">
+                    android:padding="12dp"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:nextFocusLeft="@id/bilibili_danmu_ll"
+                    android:nextFocusRight="@id/bilibili_danmu_ll">
 
                     <ImageView
                         android:layout_width="40dp"
@@ -295,7 +317,11 @@
                     android:background="@drawable/background_item_press_corner"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:padding="12dp">
+                    android:padding="12dp"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:nextFocusLeft="@id/shooter_subtitle_ll"
+                    android:nextFocusRight="@id/shooter_subtitle_ll">
 
                     <ImageView
                         android:layout_width="40dp"
@@ -321,7 +347,11 @@
                     android:background="@drawable/background_item_press_corner"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:padding="12dp">
+                    android:padding="12dp"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:nextFocusLeft="@id/screencast_receiver_ll"
+                    android:nextFocusRight="@id/screencast_receiver_ll">
 
                     <ImageView
                         android:layout_width="40dp"

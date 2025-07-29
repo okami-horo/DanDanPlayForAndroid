@@ -242,12 +242,31 @@ class MainActivity : BaseActivity<MainViewModel, ActivityMainBinding>(),
 
         // 将按键事件传递给当前Fragment
         when (fragmentTag) {
+            TAG_FRAGMENT_HOME -> {
+                if (::homeFragment.isInitialized) {
+                    try {
+                        val method = homeFragment.javaClass.getMethod("handleKeyEvent", Int::class.java, KeyEvent::class.java)
+                        return method.invoke(homeFragment, keyCode, event) as Boolean
+                    } catch (e: Exception) {
+                        // Fragment没有handleKeyEvent方法，返回false
+                    }
+                }
+            }
             TAG_FRAGMENT_MEDIA -> {
                 if (::mediaFragment.isInitialized && mediaFragment is MediaFragment) {
                     return (mediaFragment as MediaFragment).handleKeyEvent(keyCode, event)
                 }
             }
-            // 可以为其他Fragment添加类似的处理
+            TAG_FRAGMENT_PERSONAL -> {
+                if (::personalFragment.isInitialized) {
+                    try {
+                        val method = personalFragment.javaClass.getMethod("handleKeyEvent", Int::class.java, KeyEvent::class.java)
+                        return method.invoke(personalFragment, keyCode, event) as Boolean
+                    } catch (e: Exception) {
+                        // Fragment没有handleKeyEvent方法，返回false
+                    }
+                }
+            }
         }
 
         return false

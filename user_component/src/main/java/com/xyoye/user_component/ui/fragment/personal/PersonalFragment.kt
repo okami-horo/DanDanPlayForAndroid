@@ -5,6 +5,8 @@ import androidx.core.view.isVisible
 import com.alibaba.android.arouter.facade.annotation.Route
 import com.alibaba.android.arouter.launcher.ARouter
 import com.alibaba.sdk.android.feedback.impl.FeedbackAPI
+import android.view.KeyEvent
+import android.view.View
 import com.xyoye.common_component.base.BaseFragment
 import com.xyoye.common_component.bridge.LoginObserver
 import com.xyoye.common_component.bridge.ServiceLifecycleBridge
@@ -17,6 +19,7 @@ import com.xyoye.user_component.BR
 import com.xyoye.user_component.R
 import com.xyoye.user_component.databinding.FragmentPersonalBinding
 import com.xyoye.user_component.ui.dialog.UserCoverDialog
+import com.xyoye.common_component.utils.tv.TvFocusManager
 
 /**
  * Created by xyoye on 2020/7/28.
@@ -58,6 +61,9 @@ class PersonalFragment : BaseFragment<PersonalFragmentViewModel, FragmentPersona
                 applyLoginData(it)
             }
         }
+
+        // 设置TV端焦点管理
+        setupTvFocusManagement()
     }
 
     private fun applyLoginData(loginData: LoginData?) {
@@ -197,5 +203,114 @@ class PersonalFragment : BaseFragment<PersonalFragmentViewModel, FragmentPersona
             return false
         }
         return true
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // 恢复TV端焦点状态
+        restoreTvFocus()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        // 保存TV端焦点状态
+        saveTvFocus()
+    }
+
+    /**
+     * 设置TV端焦点管理
+     */
+    private fun setupTvFocusManagement() {
+        // 为主要的可点击视图设置焦点导航
+        val focusableViews = listOf(
+            dataBinding.userCoverIv,
+            dataBinding.followAnimeLl,
+            dataBinding.cloudHistoryLl,
+            dataBinding.playerSettingLl,
+            dataBinding.scanManagerLl,
+            dataBinding.cacheManagerLl,
+            dataBinding.commonlyManagerLl,
+            dataBinding.bilibiliDanmuLl,
+            dataBinding.shooterSubtitleLl,
+            dataBinding.screencastReceiverLl
+        )
+
+        // 设置焦点顺序
+        for (i in 0 until focusableViews.size - 1) {
+            focusableViews[i].nextFocusDownId = focusableViews[i + 1].id
+            focusableViews[i + 1].nextFocusUpId = focusableViews[i].id
+        }
+
+        // 设置左右边界焦点（防止焦点跳到左侧菜单栏）
+        focusableViews.forEach { view ->
+            view.nextFocusLeftId = view.id
+            view.nextFocusRightId = view.id
+        }
+    }
+
+    /**
+     * 保存TV端焦点状态
+     */
+    private fun saveTvFocus() {
+        val focusedView = dataBinding.root.findFocus()
+        if (focusedView != null) {
+            val focusKey = "${this::class.java.simpleName}_personal_focus"
+            requireContext().getSharedPreferences("tv_focus", 0)
+                .edit()
+                .putInt(focusKey, focusedView.id)
+                .apply()
+        }
+    }
+
+    /**
+     * 恢复TV端焦点状态
+     */
+    private fun restoreTvFocus() {
+        val focusKey = "${this::class.java.simpleName}_personal_focus"
+        dataBinding.root.post {
+            val savedFocusId = requireContext().getSharedPreferences("tv_focus", 0)
+                .getInt(focusKey, dataBinding.userCoverIv.id)
+            
+            val targetView = dataBinding.root.findViewById<View>(savedFocusId)
+            targetView?.requestFocus() ?: run {
+                // 默认聚焦到第一个可聚焦元素
+                dataBinding.userCoverIv.requestFocus()
+            }
+        }
+    }
+
+    /**
+     * 处理TV端按键事件
+     */
+    fun handleKeyEvent(keyCode: Int, event: KeyEvent?): Boolean {
+        if (event?.action != KeyEvent.ACTION_DOWN) {
+            return false
+        }
+
+        // 处理方向键事件，防止焦点跳到左侧菜单栏
+        when (keyCode) {
+            KeyEvent.KEYCODE_DPAD_LEFT -> {
+                // 消费左键事件，防止焦点跳到左侧菜单栏
+                return true
+            }
+            KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                // 消费右键事件，防止焦点跳到右侧
+                return true
+            }
+            KeyEvent.KEYCODE_DPAD_UP -> {
+                // 允许向上导航
+                return false
+            }
+            KeyEvent.KEYCODE_DPAD_DOWN -> {
+                // 允许向下导航
+                return false
+            }
+            KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> {
+                // 确认键由系统自动处理
+                return false
+            }
+        }
+
+        return false
     }
 }
