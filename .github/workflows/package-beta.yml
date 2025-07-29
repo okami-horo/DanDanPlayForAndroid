@@ -86,23 +86,29 @@ jobs:
             mv app/build/outputs/apk/${{ env.BUILD_TYPE }}/${file_name} $file_name
           done
 
-      # 8.删除相同版本的旧beta包
-      - name: delete old beta releases
+      # 8.删除相同版本的旧beta包和tag
+      - name: delete old beta releases and tags
         run: |
           # 安装jq工具
           sudo apt-get update && sudo apt-get install -y jq
           
-          # 获取相同版本号的旧beta发布（排除即将创建的新发布）
-          old_releases=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/repos/${{ github.repository }}/releases" \
-            | jq -r '.[] | select(.tag_name | startswith("dandanplay-v${{ env.BUILD_VERSION }}-beta")) | .id' | head -n -1)
+          # 获取相同版本号的旧beta发布和tag（排除即将创建的新发布）
+          curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/releases" > releases.json
           
-          # 删除旧发布（保留最新的一个）
-          for release_id in $old_releases; do
-            if [ ! -z "$release_id" ]; then
+          # 提取旧发布的ID和tag名称
+          old_releases=$(jq -r '.[] | select(.tag_name | startswith("dandanplay-v${{ env.BUILD_VERSION }}-beta")) | "\(.id) \(.tag_name)"' releases.json | head -n -1)
+          
+          # 删除旧发布和对应的tag（保留最新的一个）
+          echo "$old_releases" | while read -r release_id tag_name; do
+            if [ ! -z "$release_id" ] && [ ! -z "$tag_name" ]; then
               echo "删除旧beta发布: $release_id"
               curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
                 "https://api.github.com/repos/${{ github.repository }}/releases/$release_id"
+              
+              echo "删除旧beta标签: $tag_name"
+              curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                "https://api.github.com/repos/${{ github.repository }}/git/refs/tags/$tag_name"
             fi
           done
 
