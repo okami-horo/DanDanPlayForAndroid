@@ -20,6 +20,10 @@ object DevelopConfigTable {
     @MMKVFiled
     const val appSecret = "{{APP_SECRET}}"
 
+    // Bugly ID
+    @MMKVFiled
+    const val buglyId = "{{BUGLY_ID}}"
+
     // 是否已自动显示认证弹窗
     @MMKVFiled
     const val isAutoShowAuthDialog = false

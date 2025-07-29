@@ -50,7 +50,7 @@ open class BaseApplication : Application(), ImageLoaderFactory {
         CrashReport.initCrashReport(
             this,
             SecurityHelper.getInstance().buglyId,
-            BuildConfig.DEBUG
+            false
         )
         Notifications.setupNotificationChannels(this)
         ActivityHelper.instance.init(this)

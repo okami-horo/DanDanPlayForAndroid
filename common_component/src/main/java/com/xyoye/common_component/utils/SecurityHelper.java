@@ -3,6 +3,7 @@ package com.xyoye.common_component.utils;
 import android.content.Context;
 
 import com.xyoye.common_component.base.app.BaseApplication;
+import com.xyoye.common_component.config.DevelopConfigTable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,7 +37,7 @@ public class SecurityHelper {
     }
 
     public String getBuglyId() {
-        return getKey(KEY_BUGLY, appContext);
+        return DevelopConfigTable.buglyId;
     }
 
     public String getAppId() {

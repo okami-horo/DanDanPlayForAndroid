@@ -55,8 +55,10 @@ jobs:
         run: |
           APP_ID=${{ secrets.DANDANPLAY_APP_ID }}
           APP_SECRET=${{ secrets.DANDANPLAY_APP_SECRET }}
+          BUGLY_ID=${{ secrets.BUGLY_ID }}
           sed -i "s/{{APP_ID}}/$APP_ID/g" common_component/src/main/java/com/xyoye/common_component/config/DevelopConfigTable.kt
           sed -i "s/{{APP_SECRET}}/$APP_SECRET/g" common_component/src/main/java/com/xyoye/common_component/config/DevelopConfigTable.kt
+          sed -i "s/{{BUGLY_ID}}/$BUGLY_ID/g" common_component/src/main/java/com/xyoye/common_component/config/DevelopConfigTable.kt
 
       # 5.构建安装包
       - name: assemble apk
