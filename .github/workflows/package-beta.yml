@@ -92,25 +92,31 @@ jobs:
           # 安装jq工具
           sudo apt-get update && sudo apt-get install -y jq
           
-          # 获取相同版本号的旧beta发布和tag（排除即将创建的新发布）
+          # 获取相同版本号的旧beta发布和tag
           curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             "https://api.github.com/repos/${{ github.repository }}/releases" > releases.json
           
-          # 提取旧发布的ID和tag名称
-          old_releases=$(jq -r '.[] | select(.tag_name | startswith("dandanplay-v${{ env.BUILD_VERSION }}-beta")) | "\(.id) \(.tag_name)"' releases.json | head -n -1)
+          # 提取旧发布的ID和tag名称（排除当前构建将要创建的新发布）
+          old_releases=$(jq -r '.[] | select(.tag_name | startswith("dandanplay-v${{ env.BUILD_VERSION }}-beta")) | "\(.id) \(.tag_name)"' releases.json)
           
-          # 删除旧发布和对应的tag（保留最新的一个）
-          echo "$old_releases" | while read -r release_id tag_name; do
-            if [ ! -z "$release_id" ] && [ ! -z "$tag_name" ]; then
-              echo "删除旧beta发布: $release_id"
-              curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-                "https://api.github.com/repos/${{ github.repository }}/releases/$release_id"
-              
-              echo "删除旧beta标签: $tag_name"
-              curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-                "https://api.github.com/repos/${{ github.repository }}/git/refs/tags/$tag_name"
-            fi
-          done
+          # 计算需要删除的旧发布数量（保留最新的一个）
+          release_count=$(echo "$old_releases" | wc -l)
+          if [ $release_count -gt 1 ]; then
+            # 删除除最新版本外的所有旧版本
+            echo "$old_releases" | head -n -1 | while read -r release_id tag_name; do
+              if [ ! -z "$release_id" ] && [ ! -z "$tag_name" ]; then
+                echo "删除旧beta发布: $release_id"
+                curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                  "https://api.github.com/repos/${{ github.repository }}/releases/$release_id"
+                
+                echo "删除旧beta标签: $tag_name"
+                curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                  "https://api.github.com/repos/${{ github.repository }}/git/refs/tags/$tag_name"
+              fi
+            done
+          else
+            echo "没有需要删除的旧beta版本"
+          fi
 
       # 9.创建Release
       - name: generate release
