@@ -88,6 +88,18 @@ object UpdateRepository : BaseRepository() {
             release.assets.any { it.name.endsWith(APK_FILE_EXTENSION, ignoreCase = true) }
         }
         
+        // 如果明确请求beta包，优先返回最新的beta版本
+        if (includeBeta) {
+            val latestBeta = validReleases
+                .filter { it.prerelease }
+                .maxByOrNull { it.publishedAt ?: it.createdAt ?: "" }
+            
+            if (latestBeta != null) {
+                return convertToUpdateInfo(latestBeta)
+            }
+        }
+        
+        // 正常的版本检查逻辑
         for (release in validReleases) {
             val releaseVersion = extractVersionFromTag(release.tagName) ?: continue
             val updateInfo = convertToUpdateInfo(release) ?: continue

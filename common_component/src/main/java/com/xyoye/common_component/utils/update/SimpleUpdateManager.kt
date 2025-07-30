@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.text.SimpleDateFormat
@@ -25,7 +26,7 @@ import java.util.*
  */
 object SimpleUpdateManager {
     
-    private const val GITHUB_API_URL = "https://api.github.com/repos/okami-horo/DanDanPlayForAndroid/releases/latest"
+    private const val GITHUB_API_URL = "https://api.github.com/repos/okami-horo/DanDanPlayForAndroid/releases"
     
     data class UpdateInfo(
         val versionName: String,
@@ -34,11 +35,53 @@ object SimpleUpdateManager {
     )
 
     /**
-     * 检查更新（核心功能）
+     * 检查beta更新
      */
-    suspend fun checkUpdate(): UpdateInfo? = withContext(Dispatchers.IO) {
+    suspend fun checkBetaUpdate(): UpdateInfo? = withContext(Dispatchers.IO) {
         val client = OkHttpClient()
         val request = Request.Builder().url(GITHUB_API_URL).build()
+        
+        val response = client.newCall(request).execute()
+        val releases = JSONArray(response.body?.string() ?: return@withContext null)
+        
+        // 查找最新的beta版本
+        var latestBeta: JSONObject? = null
+        for (i in 0 until releases.length()) {
+            val release = releases.getJSONObject(i)
+            if (release.getBoolean("prerelease")) {
+                latestBeta = release
+                break
+            }
+        }
+        
+        if (latestBeta == null) return@withContext null
+        
+        val tagName = latestBeta.getString("tag_name").removePrefix("v")
+        if (!VersionUtils.isNewerVersion(AppUtils.getVersionName(), tagName)) return@withContext null
+        
+        val assets = latestBeta.getJSONArray("assets")
+        for (i in 0 until assets.length()) {
+            val asset = assets.getJSONObject(i)
+            if (asset.getString("name").endsWith(".apk")) {
+                val downloadUrl = asset.getString("browser_download_url")
+                val proxyUrl = if (AppConfig.isEnableGitHubProxy()) "https://ghproxy.net/$downloadUrl" else downloadUrl
+                
+                return@withContext UpdateInfo(
+                    versionName = tagName,
+                    downloadUrl = proxyUrl,
+                    updateContent = latestBeta.optString("body", "暂无更新说明")
+                )
+            }
+        }
+        null
+    }
+
+    /**
+     * 检查稳定版更新
+     */
+    suspend fun checkStableUpdate(): UpdateInfo? = withContext(Dispatchers.IO) {
+        val client = OkHttpClient()
+        val request = Request.Builder().url("https://api.github.com/repos/okami-horo/DanDanPlayForAndroid/releases/latest").build()
         
         val response = client.newCall(request).execute()
         val json = JSONObject(response.body?.string() ?: return@withContext null)
@@ -66,9 +109,9 @@ object SimpleUpdateManager {
     /**
      * 手动检查更新
      */
-    suspend fun checkUpdateManually(activity: Activity): Boolean {
+    suspend fun checkUpdateManually(activity: Activity, checkBeta: Boolean = false): Boolean {
         return try {
-            val info = checkUpdate()
+            val info = if (checkBeta) checkBetaUpdate() else checkStableUpdate()
             if (info != null) {
                 showUpdateDialog(activity, info)
                 true
@@ -93,7 +136,7 @@ object SimpleUpdateManager {
                 updateContent = info.updateContent,
                 downloadUrl = info.downloadUrl,
                 fileSize = 0,
-                isBeta = false,
+                isBeta = true,
                 isForceUpdate = false,
                 releaseDate = ""
             ), 
