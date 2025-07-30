@@ -42,34 +42,28 @@
     <PreferenceCategory android:title="更新设置">
 
         <Preference
-            android:key="check_github_update"
-            android:title="检查GitHub更新"
-            android:summary="手动检查GitHub Release更新"
-            app:icon="@drawable/ic_app_setting_update" />
-
-        <SwitchPreference
-            android:key="auto_check_update"
-            android:title="自动检查更新"
-            android:summary="应用启动时自动检查更新"
-            app:icon="@drawable/ic_app_setting_auto_update" />
-
-        <SwitchPreference
-            android:key="check_beta_update"
-            android:title="检查Beta版本"
-            android:summary="是否检查测试版本更新"
+            android:key="download_beta_package"
+            android:title="下载最新的beta包"
+            android:summary="下载最新的测试版本安装包"
             app:icon="@drawable/ic_app_setting_beta" />
 
-        <SwitchPreference
-            android:key="allow_same_version_beta"
-            android:title="重新下载Beta版本"
-            android:summary="允许重新下载相同版本的Beta包"
-            app:icon="@drawable/ic_app_setting_download" />
+        <Preference
+            android:key="download_release_package"
+            android:title="下载最新的release包"
+            android:summary="下载最新的正式版本安装包"
+            app:icon="@drawable/ic_app_setting_update" />
         
         <SwitchPreference
             android:key="enable_github_proxy"
             android:title="GitHub下载加速"
             android:summary="使用镜像代理加速GitHub Release下载"
             app:icon="@drawable/ic_app_setting_auto_update" />
+
+        <Preference
+            android:key="latest_package_info"
+            android:title="最新包信息"
+            android:summary="最新包的名字，比如弹弹play概念版 v4.1.3 Beta (2ae3833)"
+            android:selectable="false" />
 
     </PreferenceCategory>
 

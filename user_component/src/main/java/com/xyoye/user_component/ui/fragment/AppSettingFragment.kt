@@ -16,6 +16,11 @@ import com.xyoye.common_component.network.config.Api
 import com.xyoye.common_component.utils.AppUtils
 import com.xyoye.common_component.weight.ToastCenter
 import com.xyoye.user_component.R
+import com.xyoye.common_component.network.repository.UpdateRepository
+import com.xyoye.common_component.utils.update.UpdateManager
+import com.xyoye.common_component.weight.dialog.GitHubUpdateDialog
+import androidx.fragment.app.FragmentActivity
+import kotlinx.coroutines.*
 
 /**
  * Created by xyoye on 2021/2/23.
@@ -71,10 +76,20 @@ class AppSettingFragment : PreferenceFragmentCompat() {
             }
         }
 
-        // GitHub更新检查
-        findPreference<Preference>("check_github_update")?.apply {
+        // 下载最新的beta包
+        findPreference<Preference>("download_beta_package")?.apply {
             setOnPreferenceClickListener {
-                AppUtils.checkGitHubUpdate(requireActivity(), true)
+                // 实现下载最新的beta包功能
+                downloadLatestBetaPackage()
+                return@setOnPreferenceClickListener true
+            }
+        }
+
+        // 下载最新的release包
+        findPreference<Preference>("download_release_package")?.apply {
+            setOnPreferenceClickListener {
+                // 实现下载最新的release包功能
+                downloadLatestReleasePackage()
                 return@setOnPreferenceClickListener true
             }
         }
@@ -100,6 +115,104 @@ class AppSettingFragment : PreferenceFragmentCompat() {
         }
 
         super.onViewCreated(view, savedInstanceState)
+    }
+
+    private fun downloadLatestBetaPackage() {
+        val activity = activity ?: return
+        ToastCenter.showToast("正在检查最新Beta版本")
+
+        GlobalScope.launch(Dispatchers.Main) {
+            try {
+                val result = withContext(Dispatchers.IO) {
+                    // 获取最新的Beta版本
+                    UpdateRepository.checkUpdate(includeBeta = true, allowSameVersionBeta = true)
+                }
+
+                if (result.isSuccess) {
+                    val updateInfo = result.getOrNull()
+                    if (updateInfo != null) {
+                        // 显示下载对话框
+                        showDownloadDialog(activity, updateInfo)
+                    } else {
+                        ToastCenter.showToast("未找到可用的Beta版本")
+                    }
+                } else {
+                    ToastCenter.showToast("检查Beta版本失败: ${result.exceptionOrNull()?.message}")
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                ToastCenter.showToast("检查Beta版本失败: ${e.message}")
+            }
+        }
+    }
+
+    private fun downloadLatestReleasePackage() {
+        val activity = activity ?: return
+        ToastCenter.showToast("正在检查最新正式版本")
+
+        GlobalScope.launch(Dispatchers.Main) {
+            try {
+                val result = withContext(Dispatchers.IO) {
+                    // 获取最新的正式版本
+                    UpdateRepository.getLatestRelease()
+                }
+
+                if (result.isSuccess) {
+                    val updateInfo = result.getOrNull()
+                    if (updateInfo != null) {
+                        // 显示下载对话框
+                        showDownloadDialog(activity, updateInfo)
+                    } else {
+                        ToastCenter.showToast("未找到可用的正式版本")
+                    }
+                } else {
+                    ToastCenter.showToast("检查正式版本失败: ${result.exceptionOrNull()?.message}")
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                ToastCenter.showToast("检查正式版本失败: ${e.message}")
+            }
+        }
+    }
+
+    private fun showDownloadDialog(activity: FragmentActivity, updateInfo: com.xyoye.common_component.network.bean.UpdateInfo) {
+        val dialog = GitHubUpdateDialog(activity, updateInfo, GitHubUpdateDialog.Status.Update)
+
+        dialog.setPositive {
+            // 开始下载更新
+            UpdateManager.downloadUpdate(activity, updateInfo, object : UpdateManager.UpdateDownloadCallback {
+                override fun onDownloadStart() {
+                    // 下载开始
+                }
+
+                override fun onDownloadProgress(progress: Int) {
+                    dialog.updateProgress(progress)
+                }
+
+                override fun onDownloadComplete(filePath: String) {
+                    // 下载完成，显示安装对话框
+                    val installDialog = GitHubUpdateDialog(
+                        activity,
+                        updateInfo,
+                        GitHubUpdateDialog.Status.Install
+                    )
+                    installDialog.setPositive {
+                        UpdateManager.installUpdate(activity, filePath)
+                    }
+                    installDialog.show()
+                }
+
+                override fun onDownloadFailed(error: Throwable) {
+                    ToastCenter.showToast("下载失败: ${error.message}")
+                }
+            })
+        }
+
+        dialog.setNegative {
+            // 用户取消更新
+        }
+
+        dialog.show()
     }
 
     private fun checkDomainUrl(url: String): Boolean {
@@ -130,9 +243,6 @@ class AppSettingFragment : PreferenceFragmentCompat() {
                 "hide_file" -> AppConfig.isShowHiddenFile()
                 "splash_page" -> AppConfig.isShowSplashAnimation()
                 "backup_domain_enable" -> AppConfig.isBackupDomainEnable()
-                "auto_check_update" -> AppConfig.isAutoCheckUpdate()
-                "check_beta_update" -> AppConfig.isCheckBetaUpdate()
-                "allow_same_version_beta" -> AppConfig.isAllowSameVersionBeta()
                 "enable_github_proxy" -> AppConfig.isEnableGitHubProxy()
                 else -> super.getBoolean(key, defValue)
             }
@@ -143,9 +253,6 @@ class AppSettingFragment : PreferenceFragmentCompat() {
                 "hide_file" -> AppConfig.putShowHiddenFile(value)
                 "splash_page" -> AppConfig.putShowSplashAnimation(value)
                 "backup_domain_enable" -> AppConfig.putBackupDomainEnable(value)
-                "auto_check_update" -> AppConfig.putAutoCheckUpdate(value)
-                "check_beta_update" -> AppConfig.putCheckBetaUpdate(value)
-                "allow_same_version_beta" -> AppConfig.putAllowSameVersionBeta(value)
                 "enable_github_proxy" -> AppConfig.putEnableGitHubProxy(value)
                 else -> super.putBoolean(key, value)
             }

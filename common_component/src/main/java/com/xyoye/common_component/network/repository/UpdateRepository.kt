@@ -31,8 +31,8 @@ object UpdateRepository : BaseRepository() {
     suspend fun checkUpdate(
         includeBeta: Boolean = false,
         allowSameVersionBeta: Boolean = true
-    ) = request()
-        .doGet {
+    ): Result<UpdateInfo?> = request()
+        .doGet<List<GitHubReleaseBean>> {
             Retrofit.gitHubService.getReleases(
                 baseUrl = GITHUB_API_BASE_URL,
                 owner = REPO_OWNER,
@@ -40,42 +40,33 @@ object UpdateRepository : BaseRepository() {
                 page = 1,
                 perPage = 20
             )
-        }.run {
-            val releases = getOrNull() ?: return@run this
-            
+        }.map { releases ->
             val currentVersion = AppUtils.getVersionName()
-            val availableUpdate = findAvailableUpdate(
+            findAvailableUpdate(
                 releases = releases,
                 currentVersion = currentVersion,
                 includeBeta = includeBeta,
                 allowSameVersionBeta = allowSameVersionBeta
             )
-            
-            if (availableUpdate != null) {
-                Result.success(availableUpdate)
-            } else {
-                Result.success(null)
-            }
         }
     
     /**
      * 获取最新的正式版本
      */
-    suspend fun getLatestRelease() = request()
-        .doGet {
+    suspend fun getLatestRelease(): Result<UpdateInfo?> = request()
+        .doGet<GitHubReleaseBean> {
             Retrofit.gitHubService.getLatestRelease(
                 baseUrl = GITHUB_API_BASE_URL,
                 owner = REPO_OWNER,
                 repo = REPO_NAME
             )
-        }.run {
-            val release = getOrNull() ?: return@run this
-            
-            val updateInfo = convertToUpdateInfo(release)
+        }.map { release ->
+            convertToUpdateInfo(release)
+        }.mapCatching { updateInfo ->
             if (updateInfo != null) {
-                Result.success(updateInfo)
+                updateInfo
             } else {
-                Result.failure(Exception("无法解析Release信息"))
+                throw Exception("无法解析Release信息")
             }
         }
     
