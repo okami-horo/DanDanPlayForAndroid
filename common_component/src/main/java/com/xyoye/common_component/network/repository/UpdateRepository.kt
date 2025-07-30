@@ -182,11 +182,21 @@ object UpdateRepository : BaseRepository() {
         // 移除常见的前缀
         val cleanTag = tag.removePrefix("v").removePrefix("version-").removePrefix("release-")
         
-        // 验证是否为有效的版本号格式
-        return if (VersionUtils.parseVersion(cleanTag) != null) {
-            cleanTag
+        // 处理GitHub beta版本格式：4.1.3-beta-43-fa00baf -> 4.1.3-beta.43
+        val betaPattern = Regex("^(\\d+\\.\\d+\\.\\d+)-beta-(\\d+)(-.*)?$")
+        val matchResult = betaPattern.find(cleanTag)
+        
+        return if (matchResult != null) {
+            val version = matchResult.groupValues[1]
+            val betaNumber = matchResult.groupValues[2]
+            "$version-beta.$betaNumber"
         } else {
-            null
+            // 验证是否为有效的版本号格式
+            if (VersionUtils.parseVersion(cleanTag) != null) {
+                cleanTag
+            } else {
+                null
+            }
         }
     }
     
