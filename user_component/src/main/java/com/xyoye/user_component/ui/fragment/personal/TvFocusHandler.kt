@@ -1,6 +1,7 @@
 package com.xyoye.user_component.ui.fragment.personal
 
 import android.view.KeyEvent
+import android.graphics.Rect
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.ViewCompat
@@ -35,10 +36,10 @@ object TvFocusHandler {
         if (currentIndex == -1) return false
 
         return when (keyCode) {
-            KeyEvent.KEYCODE_DPAD_UP -> handleUpNavigation(view, currentIndex, focusableViews)
-            KeyEvent.KEYCODE_DPAD_DOWN -> handleDownNavigation(view, currentIndex, focusableViews)
-            KeyEvent.KEYCODE_DPAD_LEFT -> handleLeftNavigation(view, focusableViews)
-            KeyEvent.KEYCODE_DPAD_RIGHT -> handleRightNavigation(view, focusableViews)
+            KeyEvent.KEYCODE_DPAD_UP -> handleUpNavigation(currentIndex, focusableViews)
+            KeyEvent.KEYCODE_DPAD_DOWN -> handleDownNavigation(currentIndex, focusableViews)
+            KeyEvent.KEYCODE_DPAD_LEFT -> handleLeftNavigation(view)
+            KeyEvent.KEYCODE_DPAD_RIGHT -> handleRightNavigation(view)
             else -> false
         }
     }
@@ -47,7 +48,6 @@ object TvFocusHandler {
      * 处理向上导航
      */
     private fun handleUpNavigation(
-        currentView: View,
         currentIndex: Int,
         focusableViews: List<View>
     ): Boolean {
@@ -63,10 +63,39 @@ object TvFocusHandler {
     }
 
     /**
+     * 判断目标视图是否是当前视图的左侧邻居
+     */
+    private fun isLeftNeighbor(currentView: View, targetView: View): Boolean {
+        val currentRect = Rect().apply { currentView.getGlobalVisibleRect(this) }
+        val targetRect = Rect().apply { targetView.getGlobalVisibleRect(this) }
+        
+        // 目标视图在当前视图的左侧，并且在同一行
+        return targetRect.right <= currentRect.left && 
+               targetRect.top < currentRect.bottom && 
+               targetRect.bottom > currentRect.top &&
+               targetView.isVisible && 
+               targetView.isFocusable
+    }
+
+    /**
+     * 判断目标视图是否是当前视图的右侧邻居
+     */
+    private fun isRightNeighbor(currentView: View, targetView: View): Boolean {
+        val currentRect = Rect().apply { currentView.getGlobalVisibleRect(this) }
+        val targetRect = Rect().apply { targetView.getGlobalVisibleRect(this) }
+        
+        // 目标视图在当前视图的右侧，并且在同一行
+        return targetRect.left >= currentRect.right && 
+               targetRect.top < currentRect.bottom && 
+               targetRect.bottom > currentRect.top &&
+               targetView.isVisible && 
+               targetView.isFocusable
+    }
+
+    /**
      * 处理向下导航
      */
     private fun handleDownNavigation(
-        currentView: View,
         currentIndex: Int,
         focusableViews: List<View>
     ): Boolean {
@@ -84,17 +113,43 @@ object TvFocusHandler {
     /**
      * 处理向左导航
      */
-    private fun handleLeftNavigation(currentView: View, focusableViews: List<View>): Boolean {
-        // 移除对向左导航的限制
-        return false // 返回false表示不消费该事件，继续传递
+    private fun handleLeftNavigation(currentView: View): Boolean {
+        val parent = currentView.parent as? ViewGroup ?: return false
+        val siblings = getFocusableViews(parent)
+        val currentIndex = siblings.indexOf(currentView)
+        
+        // 查找左侧邻居视图
+        for (i in currentIndex - 1 downTo 0) {
+            val targetView = siblings[i]
+            if (isLeftNeighbor(currentView, targetView)) {
+                targetView.requestFocus()
+                ensureViewVisible(targetView)
+                return true
+            }
+        }
+        
+        return false
     }
 
     /**
      * 处理向右导航
      */
-    private fun handleRightNavigation(currentView: View, focusableViews: List<View>): Boolean {
-        // 移除对向右导航的限制
-        return false // 返回false表示不消费该事件，继续传递
+    private fun handleRightNavigation(currentView: View): Boolean {
+        val parent = currentView.parent as? ViewGroup ?: return false
+        val siblings = getFocusableViews(parent)
+        val currentIndex = siblings.indexOf(currentView)
+        
+        // 查找右侧邻居视图
+        for (i in currentIndex + 1 until siblings.size) {
+            val targetView = siblings[i]
+            if (isRightNeighbor(currentView, targetView)) {
+                targetView.requestFocus()
+                ensureViewVisible(targetView)
+                return true
+            }
+        }
+        
+        return false
     }
 
     /**

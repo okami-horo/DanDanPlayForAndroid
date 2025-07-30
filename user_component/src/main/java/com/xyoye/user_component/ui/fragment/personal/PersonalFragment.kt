@@ -244,11 +244,8 @@ class PersonalFragment : BaseFragment<PersonalFragmentViewModel, FragmentPersona
             focusableViews[i + 1].nextFocusUpId = focusableViews[i].id
         }
 
-        // 设置左右边界焦点（防止焦点跳到左侧菜单栏）
-        focusableViews.forEach { view ->
-            view.nextFocusLeftId = view.id
-            view.nextFocusRightId = view.id
-        }
+        // 在grid布局中允许左右焦点移动
+        // 移除限制左右焦点的代码，让TvFocusHandler处理左右导航
 
         // 特殊处理横向布局中的焦点关系
         if (resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE) {
