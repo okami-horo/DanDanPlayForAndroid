@@ -85,18 +85,16 @@ object TvFocusHandler {
      * 处理向左导航
      */
     private fun handleLeftNavigation(currentView: View, focusableViews: List<View>): Boolean {
-        // 在TV端，向左通常不应该离开当前视图
-        // 防止焦点跳到左侧菜单栏
-        return true
+        // 移除对向左导航的限制
+        return false // 返回false表示不消费该事件，继续传递
     }
 
     /**
      * 处理向右导航
      */
     private fun handleRightNavigation(currentView: View, focusableViews: List<View>): Boolean {
-        // 在TV端，向右通常不应该离开当前视图
-        // 防止焦点跳到其他区域
-        return true
+        // 移除对向右导航的限制
+        return false // 返回false表示不消费该事件，继续传递
     }
 
     /**

@@ -162,9 +162,7 @@
                     android:orientation="horizontal"
                     android:padding="12dp"
                     android:focusable="true"
-                    android:focusableInTouchMode="true"
-                    android:nextFocusLeft="@id/player_setting_ll"
-                    android:nextFocusRight="@id/player_setting_ll">
+                    android:focusableInTouchMode="true">
 
                     <ImageView
                         android:layout_width="40dp"
@@ -192,9 +190,7 @@
                     android:orientation="horizontal"
                     android:padding="12dp"
                     android:focusable="true"
-                    android:focusableInTouchMode="true"
-                    android:nextFocusLeft="@id/scan_manager_ll"
-                    android:nextFocusRight="@id/scan_manager_ll">
+                    android:focusableInTouchMode="true">
 
                     <ImageView
                         android:layout_width="40dp"
@@ -222,9 +218,7 @@
                     android:orientation="horizontal"
                     android:padding="12dp"
                     android:focusable="true"
-                    android:focusableInTouchMode="true"
-                    android:nextFocusLeft="@id/cache_manager_ll"
-                    android:nextFocusRight="@id/cache_manager_ll">
+                    android:focusableInTouchMode="true">
 
                     <ImageView
                         android:layout_width="40dp"
@@ -252,9 +246,7 @@
                     android:orientation="horizontal"
                     android:padding="12dp"
                     android:focusable="true"
-                    android:focusableInTouchMode="true"
-                    android:nextFocusLeft="@id/commonly_manager_ll"
-                    android:nextFocusRight="@id/commonly_manager_ll">
+                    android:focusableInTouchMode="true">
 
                     <ImageView
                         android:layout_width="40dp"
@@ -293,9 +285,7 @@
                     android:orientation="horizontal"
                     android:padding="12dp"
                     android:focusable="true"
-                    android:focusableInTouchMode="true"
-                    android:nextFocusLeft="@id/bilibili_danmu_ll"
-                    android:nextFocusRight="@id/bilibili_danmu_ll">
+                    android:focusableInTouchMode="true">
 
                     <ImageView
                         android:layout_width="40dp"
@@ -323,9 +313,7 @@
                     android:orientation="horizontal"
                     android:padding="12dp"
                     android:focusable="true"
-                    android:focusableInTouchMode="true"
-                    android:nextFocusLeft="@id/shooter_subtitle_ll"
-                    android:nextFocusRight="@id/shooter_subtitle_ll">
+                    android:focusableInTouchMode="true">
 
                     <ImageView
                         android:layout_width="40dp"
@@ -353,9 +341,7 @@
                     android:orientation="horizontal"
                     android:padding="12dp"
                     android:focusable="true"
-                    android:focusableInTouchMode="true"
-                    android:nextFocusLeft="@id/screencast_receiver_ll"
-                    android:nextFocusRight="@id/screencast_receiver_ll">
+                    android:focusableInTouchMode="true">
 
                     <ImageView
                         android:layout_width="40dp"
@@ -412,9 +398,7 @@
                     android:orientation="horizontal"
                     android:padding="12dp"
                     android:focusable="true"
-                    android:focusableInTouchMode="true"
-                    android:nextFocusLeft="@id/feedback_ll"
-                    android:nextFocusRight="@id/feedback_ll">
+                    android:focusableInTouchMode="true">
 
                     <ImageView
                         android:layout_width="40dp"
@@ -442,9 +426,7 @@
                     android:orientation="horizontal"
                     android:padding="12dp"
                     android:focusable="true"
-                    android:focusableInTouchMode="true"
-                    android:nextFocusLeft="@id/app_setting_ll"
-                    android:nextFocusRight="@id/app_setting_ll">
+                    android:focusableInTouchMode="true">
 
                     <ImageView
                         android:layout_width="40dp"

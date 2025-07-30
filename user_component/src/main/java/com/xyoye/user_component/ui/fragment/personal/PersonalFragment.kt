@@ -357,15 +357,15 @@ class PersonalFragment : BaseFragment<PersonalFragmentViewModel, FragmentPersona
             return false
         }
 
-        // 处理方向键事件，防止焦点跳到左侧菜单栏
+        // 处理方向键事件，允许焦点正常移动
         when (keyCode) {
             KeyEvent.KEYCODE_DPAD_LEFT -> {
-                // 消费左键事件，防止焦点跳到左侧菜单栏
-                return true
+                // 不再消费左键事件，允许焦点正常移动
+                return false
             }
             KeyEvent.KEYCODE_DPAD_RIGHT -> {
-                // 消费右键事件，防止焦点跳到右侧
-                return true
+                // 不再消费右键事件，允许焦点正常移动
+                return false
             }
             KeyEvent.KEYCODE_DPAD_UP -> {
                 // 允许向上导航
