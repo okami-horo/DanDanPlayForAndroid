@@ -12,7 +12,7 @@ import setup.utils.setupKotlinOptions
 import setup.utils.setupOutputApk
 import setup.utils.setupSignConfigs
 
-@Suppress("UnstableApiUsage")
+@Suppress("UnstableApiUsage", "DEPRECATION")
 fun Project.applicationSetup() {
     extensions.getByName<AppExtension>("android").apply {
         compileOptions {

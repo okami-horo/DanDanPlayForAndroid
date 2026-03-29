@@ -9,7 +9,7 @@ import android.view.MenuItem
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.coroutineScope
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.alibaba.android.arouter.facade.annotation.Autowired
@@ -195,10 +195,28 @@ class StorageFileActivity : BaseActivity<StorageFileViewModel, ActivityStorageFi
             showBilibiliRiskVerifyDialog(payload.vVoucher)
         }
         if (storage is FtpStorage) {
-            lifecycle.coroutineScope.launchWhenResumed {
-                withContext(Dispatchers.IO) {
-                    (storage as FtpStorage).completePending()
+            val ftpStorage = storage as FtpStorage
+            if (lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+                lifecycleScope.launch(Dispatchers.IO) {
+                    ftpStorage.completePending()
                 }
+            } else {
+                lifecycle.addObserver(
+                    object : LifecycleEventObserver {
+                        override fun onStateChanged(
+                            source: androidx.lifecycle.LifecycleOwner,
+                            event: Lifecycle.Event
+                        ) {
+                            if (event != Lifecycle.Event.ON_RESUME) {
+                                return
+                            }
+                            source.lifecycle.removeObserver(this)
+                            lifecycleScope.launch(Dispatchers.IO) {
+                                ftpStorage.completePending()
+                            }
+                        }
+                    },
+                )
             }
         }
     }

@@ -43,6 +43,7 @@ class PlayerPopupManager(
 
     private val mWindowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
 
+    @Suppress("DEPRECATION")
     private val mWindowLayoutParams =
         WindowManager.LayoutParams().apply {
 
@@ -118,6 +119,7 @@ class PlayerPopupManager(
         isShowing = true
     }
      */
+    @Suppress("UNUSED_PARAMETER")
     fun show(player: DanDanVideoPlayer) = Unit
 
     /*

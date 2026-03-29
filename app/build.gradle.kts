@@ -50,7 +50,7 @@ android {
         }
     }
 
-    packagingOptions {
+    packaging {
         jniLibs {
             pickFirsts.add("lib/**/libc++_shared.so")
         }

@@ -82,7 +82,7 @@ val jacocoClassExcludes =
 
 tasks {
     val clean by registering(Delete::class) {
-        delete(buildDir)
+        delete(layout.buildDirectory)
     }
 
     register("jacocoAggregateDebugUnitTest") {
@@ -146,17 +146,18 @@ gradle.projectsEvaluated {
 
         val classDirs =
             coverageProjects.flatMap { project ->
+                val projectBuildDir = project.layout.buildDirectory.asFile.get()
                 listOf(
-                    project.fileTree("${project.buildDir}/tmp/kotlin-classes/debug") {
+                    project.fileTree("${projectBuildDir}/tmp/kotlin-classes/debug") {
                         exclude(jacocoClassExcludes)
                     },
-                    project.fileTree("${project.buildDir}/intermediates/javac/debug/classes") {
+                    project.fileTree("${projectBuildDir}/intermediates/javac/debug/classes") {
                         exclude(jacocoClassExcludes)
                     },
-                    project.fileTree("${project.buildDir}/intermediates/javac/debug/compileDebugJavaWithJavac/classes") {
+                    project.fileTree("${projectBuildDir}/intermediates/javac/debug/compileDebugJavaWithJavac/classes") {
                         exclude(jacocoClassExcludes)
                     },
-                    project.fileTree("${project.buildDir}/classes/kotlin/debug") {
+                    project.fileTree("${projectBuildDir}/classes/kotlin/debug") {
                         exclude(jacocoClassExcludes)
                     },
                 )
@@ -164,10 +165,11 @@ gradle.projectsEvaluated {
 
         val execData =
             coverageProjects.flatMap { project ->
+                val projectBuildDir = project.layout.buildDirectory.asFile.get()
                 listOf(
-                    project.file("${project.buildDir}/jacoco/testDebugUnitTest.exec"),
-                    project.file("${project.buildDir}/outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec"),
-                    project.fileTree("${project.buildDir}/outputs/code_coverage/debugAndroidTest/connected") {
+                    project.file("${projectBuildDir}/jacoco/testDebugUnitTest.exec"),
+                    project.file("${projectBuildDir}/outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec"),
+                    project.fileTree("${projectBuildDir}/outputs/code_coverage/debugAndroidTest/connected") {
                         include("**/*.ec")
                     },
                 )
@@ -205,7 +207,7 @@ gradle.projectsEvaluated {
 }
 
 fun isNonStable(version: String): Boolean {
-    val stableKeyword = listOf("RELEASE", "FINAL", "GA").any { version.toUpperCase().contains(it) }
+    val stableKeyword = listOf("RELEASE", "FINAL", "GA").any { version.uppercase().contains(it) }
     val regex = "^[0-9,.v-]+(-r)?$".toRegex()
     val isStable = stableKeyword || regex.matches(version)
     return isStable.not()

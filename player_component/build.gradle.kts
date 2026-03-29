@@ -38,19 +38,12 @@ configurations.configureEach {
 }
 
 android {
-    ndkVersion = "25.2.9519653"
     defaultConfig {
         ndk {
             abiFilters += listOf("armeabi-v7a", "arm64-v8a")
         }
-        externalNativeBuild {
-            cmake {
-                arguments += listOf("-DASS_GPU_RENDER=ON")
-                cppFlags += listOf("-DASS_GPU_RENDER")
-            }
-        }
     }
-    packagingOptions {
+    packaging {
         jniLibs {
             pickFirsts.add("lib/**/libc++_shared.so")
             // Prevent duplicate packaging when the same prebuilt .so is present in both jniLibs and
@@ -100,7 +93,7 @@ val stripReleaseJniLibs by tasks.registering {
 
     doLast {
         val ndkDir =
-            android.ndkDirectory?.takeIf { it.isDirectory }
+            android.ndkDirectory.takeIf { it.isDirectory }
                 ?: error("NDK not found, cannot strip release .so files.")
         val hostTag = computeNdkHostTag(ndkDir)
         val stripExecutableName = if (hostTag.startsWith("windows")) "llvm-strip.exe" else "llvm-strip"

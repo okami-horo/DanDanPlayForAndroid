@@ -37,6 +37,12 @@ object LogConfigTable {
     var httpLogServerPort: Int = 17010
 
     @MMKVFiled
+    var tcpLogServerEnabled: Boolean = false
+
+    @MMKVFiled
+    var tcpLogServerPort: Int = 17010
+
+    @MMKVFiled
     var httpLogServerToken: String = ""
 
     @MMKVFiled

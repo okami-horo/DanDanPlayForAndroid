@@ -4,6 +4,7 @@
 **/build/
 /.idea
 /.gradle
+/.dev-env
 /.settings
 /.agents
 .externalNativeBuild

@@ -28,11 +28,11 @@ class DocumentTreeLauncher(
         activity.lifecycle.addObserver(this)
     }
 
-    override fun onCreate(lifecycleOwner: LifecycleOwner) {
+    override fun onCreate(owner: LifecycleOwner) {
         openDocumentTree =
             activity.activityResultRegistry.register(
                 KEY_OPEN_DOCUMENT_TREE,
-                lifecycleOwner,
+                owner,
                 ActivityResultContracts.OpenDocumentTree(),
             ) {
                 onResult.invoke(it)

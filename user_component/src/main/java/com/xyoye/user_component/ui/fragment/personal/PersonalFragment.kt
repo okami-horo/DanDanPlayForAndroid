@@ -235,7 +235,7 @@ class PersonalFragment : BaseFragment<PersonalFragmentViewModel, FragmentPersona
                 .navigation()
         }
 
-        dataBinding.developerSettingLl?.setOnClickListener {
+        dataBinding.developerSettingLl.setOnClickListener {
             ARouter
                 .getInstance()
                 .build(RouteTable.User.SettingDeveloper)

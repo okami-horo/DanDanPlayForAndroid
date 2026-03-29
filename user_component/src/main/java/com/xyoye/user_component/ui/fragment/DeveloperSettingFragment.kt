@@ -729,8 +729,8 @@ class DeveloperSettingFragment : BasePreferenceFragmentCompat() {
     private fun refreshHttpLogServerIpTextAsync() {
         SupervisorScope.IO.launch {
             val ipText = resolveLocalIpText()
-            SupervisorScope.Main.launch {
-                if (!isAdded) return@launch
+            SupervisorScope.Main.launch uiLaunch@{
+                if (!isAdded) return@uiLaunch
                 httpLogServerIpText = ipText
                 val state = LogSystem.getHttpLogServerState()
                 findPreference<SwitchPreference>(KEY_HTTP_LOG_SERVER_ENABLE)?.let { pref ->

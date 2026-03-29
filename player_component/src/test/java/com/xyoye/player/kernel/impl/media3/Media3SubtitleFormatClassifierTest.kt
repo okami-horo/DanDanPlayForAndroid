@@ -11,6 +11,7 @@ class Media3SubtitleFormatClassifierTest {
     @Test
     fun isSsaMime_matchesKnownSsaAliases() {
         assertTrue(Media3SubtitleFormatClassifier.isSsaMime("text/x-ssa"))
+        assertTrue(Media3SubtitleFormatClassifier.isSsaMime("TEXT/X-SSA"))
         assertTrue(Media3SubtitleFormatClassifier.isSsaMime("application/x-ass"))
         assertTrue(Media3SubtitleFormatClassifier.isSsaMime("TEXT/SSA"))
         assertFalse(Media3SubtitleFormatClassifier.isSsaMime("text/vtt"))
@@ -19,7 +20,9 @@ class Media3SubtitleFormatClassifierTest {
     @Test
     fun isSsaCodecs_handlesCommaSeparatedCodecs() {
         assertTrue(Media3SubtitleFormatClassifier.isSsaCodecs("text/x-ssa"))
+        assertTrue(Media3SubtitleFormatClassifier.isSsaCodecs("TEXT/X-SSA"))
         assertTrue(Media3SubtitleFormatClassifier.isSsaCodecs("mp4a.40.2, text/x-ssa"))
+        assertTrue(Media3SubtitleFormatClassifier.isSsaCodecs("mp4a.40.2, TEXT/X-SSA"))
         assertTrue(Media3SubtitleFormatClassifier.isSsaCodecs("ASS"))
         assertFalse(Media3SubtitleFormatClassifier.isSsaCodecs("wvtt"))
     }

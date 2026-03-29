@@ -1,6 +1,7 @@
 package com.xyoye.storage_component.utils.launcher
 
 import android.content.Intent
+import android.os.Build
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.FragmentActivity
@@ -27,14 +28,22 @@ class ScanActivityLauncher(
         activity.lifecycle.addObserver(this)
     }
 
-    override fun onCreate(lifecycleOwner: LifecycleOwner) {
+    override fun onCreate(owner: LifecycleOwner) {
         launchScanActivity =
             activity.activityResultRegistry.register(
                 KEY_LAUNCH_SCAN_ACTIVITY,
-                lifecycleOwner,
+                owner,
                 ActivityResultContracts.StartActivityForResult(),
             ) {
-                val scanData = it.data?.getParcelableExtra<RemoteScanData>("scan_data")
+                val scanData =
+                    it.data?.let { intent ->
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            intent.getParcelableExtra("scan_data", RemoteScanData::class.java)
+                        } else {
+                            @Suppress("DEPRECATION")
+                            intent.getParcelableExtra("scan_data")
+                        }
+                    }
                 onResult.invoke(scanData)
             }
     }

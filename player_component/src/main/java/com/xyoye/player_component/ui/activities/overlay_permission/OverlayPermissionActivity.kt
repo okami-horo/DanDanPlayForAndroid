@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import com.xyoye.common_component.base.app.BaseApplication
@@ -17,8 +18,6 @@ import com.xyoye.common_component.weight.ToastCenter
 
 class OverlayPermissionActivity : AppCompatActivity() {
     companion object {
-        private const val REQUEST_CODE = 1001
-
         private var permissionCallback: ((Boolean) -> Unit)? = null
 
         fun requestOverlayPermission(
@@ -42,6 +41,11 @@ class OverlayPermissionActivity : AppCompatActivity() {
             }
     }
 
+    private val overlayPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            onPermissionResult(hasOverlayPermission(this))
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || hasOverlayPermission(this)) {
@@ -57,21 +61,11 @@ class OverlayPermissionActivity : AppCompatActivity() {
         val intent = Intent("android.settings.action.MANAGE_OVERLAY_PERMISSION")
         intent.data = Uri.parse("package:$packageName")
         if (intent.resolveActivity(packageManager) != null) {
-            startActivityForResult(intent, REQUEST_CODE)
+            overlayPermissionLauncher.launch(intent)
         } else {
             ToastCenter.showError("无法启动悬浮窗权限授权页")
             onPermissionResult(false)
         }
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    override fun onActivityResult(
-        requestCode: Int,
-        resultCode: Int,
-        data: Intent?
-    ) {
-        super.onActivityResult(requestCode, resultCode, data)
-        onPermissionResult(hasOverlayPermission(this))
     }
 
     private fun onPermissionResult(granted: Boolean) {

@@ -11,7 +11,7 @@ import setup.utils.setupDefaultDependencies
 import setup.utils.currentCommit
 import setup.utils.setupKotlinOptions
 
-@Suppress("UnstableApiUsage")
+@Suppress("UnstableApiUsage", "DEPRECATION")
 fun Project.moduleSetup() {
     extensions.getByName<LibraryExtension>("android").apply {
         compileSdk = Versions.compileSdkVersion

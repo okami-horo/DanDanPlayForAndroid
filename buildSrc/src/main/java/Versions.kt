@@ -5,5 +5,5 @@ object Versions {
     const val targetSdkVersion = 35
     const val versionCode = 68
     const val versionName = "4.2.1"
-    const val ndkVersion = "23.1.7779620"
+    const val ndkVersion = "25.2.9519653"
 }

@@ -253,6 +253,10 @@ class LibassSsaStreamDecoder(
         sampleTimeUs: Long,
         subsampleOffsetUs: Long
     ): Long {
+        // Media3 passes subtitle samples to decoders in ExoPlayer renderer time. This is typically
+        // offset by a large positive base (see ExoPlayerImplInternal/MediaPeriodQueue in Media3).
+        // DDPlayTV's GPU subtitle renderer uses player window position (0-based), so strip the
+        // offset here to keep libass timestamps aligned with UI position.
         val effectiveOffsetUs =
             when (subsampleOffsetUs) {
                 Format.OFFSET_SAMPLE_RELATIVE -> resolveSampleRelativeOffsetUs(sampleTimeUs)
@@ -311,7 +315,9 @@ class LibassSsaStreamDecoder(
 
         private const val SSA_TIMECODE_LENGTH = 10
         private const val SSA_TIMECODE_LAST_VALUE_SCALING_FACTOR = 10_000L
-        // Media3 sample-relative text timestamps are usually anchored in large fixed-size windows.
+        // Media3 ExoPlayer anchors renderer timestamps at a large positive base (~1e12 us).
+        // SubtitleInputBuffer.timeUs includes this base, while our GPU renderer clock uses
+        // player window position. Infer and subtract the anchor for sample-relative timelines.
         private const val SAMPLE_RELATIVE_TIMESTAMP_ANCHOR_STEP_US = 1_000_000_000_000L
 
         private val SSA_PREFIX =

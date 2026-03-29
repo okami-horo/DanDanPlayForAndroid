@@ -80,6 +80,7 @@ class AudioFocusHelper(
         }
     }
 
+    @Suppress("DEPRECATION")
     fun requestFocus() {
         if (!enable) {
             return
@@ -110,6 +111,7 @@ class AudioFocusHelper(
         mStartRequested = true
     }
 
+    @Suppress("DEPRECATION")
     fun abandonFocus() {
         if (!enable) {
             return

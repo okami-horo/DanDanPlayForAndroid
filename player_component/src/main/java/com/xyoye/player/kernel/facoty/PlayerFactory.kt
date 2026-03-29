@@ -15,7 +15,6 @@ import com.xyoye.player.kernel.inter.AbstractVideoPlayer
 abstract class PlayerFactory {
     companion object {
         @UnstableApi
-        @OptIn(UnstableApi::class)
         fun getFactory(playerType: PlayerType): PlayerFactory =
             when (playerType) {
                 PlayerType.TYPE_EXO_PLAYER -> Media3PlayerFactory()

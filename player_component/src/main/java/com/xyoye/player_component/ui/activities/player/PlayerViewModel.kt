@@ -31,6 +31,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import master.flame.danmaku.danmaku.model.BaseDanmaku
 import java.math.BigDecimal
+import java.math.RoundingMode
 
 class PlayerViewModel : BaseViewModel() {
     companion object {
@@ -194,7 +195,7 @@ class PlayerViewModel : BaseViewModel() {
             try {
                 val time =
                     BigDecimal(sendDanmuBean.position.toDouble() / 1000)
-                        .setScale(2, BigDecimal.ROUND_HALF_UP)
+                        .setScale(2, RoundingMode.HALF_UP)
                         .toString()
 
                 val mode =
@@ -248,7 +249,7 @@ class PlayerViewModel : BaseViewModel() {
     ) {
         val time =
             BigDecimal(sendDanmuBean.position.toDouble() / 1000)
-                .setScale(2, BigDecimal.ROUND_HALF_UP)
+                .setScale(2, RoundingMode.HALF_UP)
                 .toString()
 
         val mode =

@@ -4,6 +4,7 @@ import android.animation.Animator
 import android.animation.ValueAnimator
 import android.content.Context
 import android.content.res.Configuration
+import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
 import android.util.AttributeSet
@@ -89,7 +90,13 @@ class ExpandableLayout : FrameLayout {
         if (state != null && state is Bundle) {
             mExpansion = state.getFloat(KEY_EXPANSION)
             currentState = if (mExpansion == 1f) State.EXPANDED else State.COLLAPSED
-            val superSate: Parcelable? = state.getParcelable(KEY_SUPER_STATE)
+            val superSate: Parcelable? =
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    state.getParcelable(KEY_SUPER_STATE, Parcelable::class.java)
+                } else {
+                    @Suppress("DEPRECATION")
+                    state.getParcelable(KEY_SUPER_STATE)
+                }
             super.onRestoreInstanceState(superSate)
         }
     }

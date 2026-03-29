@@ -8,6 +8,7 @@ package com.xyoye.player.subtitle.libass
     message = "CPU libass renderer removed; use AssGpuRenderer GPU pipeline.",
     level = DeprecationLevel.ERROR,
 )
+@Suppress("UNUSED_PARAMETER")
 class LibassBridge {
     companion object {
         init {

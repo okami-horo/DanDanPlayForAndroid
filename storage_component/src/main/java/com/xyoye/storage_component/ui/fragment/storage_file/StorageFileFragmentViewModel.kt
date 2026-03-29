@@ -202,7 +202,7 @@ class StorageFileFragmentViewModel : BaseViewModel() {
                         .sortedWith(StorageSortOption.comparator())
                         .onEach { it.playHistory = getHistory(it) }
                         .let { files ->
-                            _fileLiveData.postValue(files.map { it as Any })
+                            _fileLiveData.postValue(files)
                         }
                 } catch (e: Exception) {
                     if (handleLoginRequiredIfNeeded(e, clearList = true)) {
@@ -228,7 +228,7 @@ class StorageFileFragmentViewModel : BaseViewModel() {
             .plus(currentFiles)
             .filter { it.fileName().contains(text) }
             .let { files ->
-                _fileLiveData.postValue(files.map { it as Any })
+                _fileLiveData.postValue(files)
             }
     }
 
