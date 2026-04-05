@@ -198,6 +198,17 @@ class ExternalSubtitleView(
         loadSubtitleAsync(subtitlePath)
     }
 
+    fun clearTrack() {
+        mFindSubtitleJob?.cancel()
+        mLoadSubtitleJob?.cancel()
+        mSubtitleManager.release()
+        mAddedTrack = null
+        mTrackSelected = false
+        mSubtitleLoaded = false
+        mSubtitleLoading = false
+        sendEmptySubtitle()
+    }
+
     private fun showUnsupportedFormatDialog(extension: String) {
         if (unsupportedFormatDialog?.isShowing == true) {
             return

@@ -17,6 +17,29 @@ The app follows a modular MVVM layout. The composition root lives in `app/` (lau
   - `:user_component`: user center + settings (login/profile, theme, player/app/developer settings, cache/scan management, about/licenses, etc.).
 - Infrastructure integration modules (1)
   - `:bilibili_component`: Bilibili integration (auth/cookies, signing, playback links/MPD, danmaku download, live danmaku socket, playback heartbeat + risk-control state), reused across modules.
+
+## Bilibili Logic Reference Project
+- 参考源项目路径：`E:\Project\PiliPlus`
+- 用途：当 agent 处理 Bilibili 媒体库相关逻辑时，应将 `PiliPlus` 视为“行为参考实现”来源之一，用于理解接口组织、媒体库数据流、分页/分区、收藏/历史/稍后再看、播放地址与详情页装配等实现思路。
+- 适用范围：
+  - `:bilibili_component` 内的接口封装、鉴权、签名、播放地址、媒体详情、弹幕相关逻辑。
+  - 本仓库中依赖 Bilibili 数据源的媒体库、详情页、播放入口、历史记录、搜索/筛选等业务流程。
+- 工作要求：
+  - 在修改或新增 Bilibili 媒体库逻辑前，先浏览 `E:\Project\PiliPlus` 对应源码，再分析当前仓库已有实现，最后做“参考实现 -> 当前模块”的映射，不要直接照搬。
+  - 优先借鉴其业务流程、字段语义、异常处理、分页策略、接口组合方式；不要直接复制与当前架构不兼容的 Flutter/Dart UI 层写法。
+  - 若 `PiliPlus` 与当前仓库行为不一致，应以当前仓库架构、TV 交互约束和现有模块边界为准，并在说明中明确“参考了 PiliPlus，但进行了本地化适配”。
+- 建议浏览顺序：
+  1. 先看 `E:\Project\PiliPlus\lib` 下与 Bilibili 媒体库、详情、播放、历史、收藏夹相关的 repository/service/provider/controller 实现。
+  2. 再看 `E:\Project\PiliPlus\android` 中与鉴权、播放器桥接、平台能力相关的 Android 侧补充实现。
+  3. 最后回到本仓库的 `:bilibili_component`、`local_component`、`player_component`、`storage_component` 做映射设计。
+- 搜索策略：
+  - 在当前仓库或 `PiliPlus` 中查找“谁调用某接口/某类负责什么逻辑/某字段如何流转”这类源码问题时，默认优先使用 ast-grep，而不是纯文本搜索。
+  - 仅在搜索字面量字符串、错误文案、资源名、配置键时使用文本搜索；若先用文本搜索定位片段，后续必须切回 ast-grep 做准确确认。
+- 输出要求：
+  - 若任务涉及 Bilibili 媒体库逻辑，agent 的分析或变更说明中应简要写明：
+    - 参考了 `E:\Project\PiliPlus` 的哪些目录或关键文件
+    - 对应映射到本仓库的哪些模块/类
+    - 哪些逻辑是“参考实现”，哪些逻辑因 TV/UI/架构差异做了调整
 - Core foundation modules (7)
   - `:core_contract_component`: cross-module contracts + routing (e.g. `RouteTable`), Service interfaces (file sharing/casting), playback extensions / shared Media3 session APIs.
   - `:core_system_component`: runtime/system integration (Application/startup orchestration, permissions/notifications/broadcasts, global config tables/tools, build-time injected keys/flags); may depend on `:core_log_component` to initialize logging/crash reporting early.
@@ -205,6 +228,62 @@ Stick to the Kotlin version configured by the repo (currently 1.9.25), with 4-sp
 ## Testing Guidelines
 Place JVM tests in `*/src/test/java` and instrumentation suites in `*/src/androidTest/java`; name files `<Class>Test.kt` or `<Feature>InstrumentedTest.kt` so Gradle discovers them. Cover parsing, player helpers, and data-layer conversions with unit tests, and reserve playback/integration flows for instrumentation backed by an emulator with media files in `storage_component`. Failing tests should block the PR, so run `testDebugUnitTest` locally and attach emulator logs when `connectedDebugAndroidTest` fails.
 
+### 本机 AVD 环境基线
+- 当前系统已安装 Android SDK，`ANDROID_SDK_ROOT` / `ANDROID_HOME` 均指向 `C:\Android\Sdk`。
+- 当前检测到的 AVD:
+  - `Pixel_5_API_34`
+- 当前 `adb devices -l` 状态:
+  - `emulator-5554 offline`
+- 当前未检测到活动中的 `emulator.exe` / `qemu-system-*` 进程，因此 `emulator-5554 offline` 更像是残留的 adb 会话，而不是可用中的模拟器实例。
+- 在继续执行仪器测试前，必须先确认设备处于 `device` 状态；若仍为 `offline`，优先执行：
+  - `adb kill-server`
+  - `adb start-server`
+  - `adb devices -l`
+- 如需手动启动本机 AVD，优先使用 SDK 绝对路径，避免 PATH 歧义：
+  - `C:\Android\Sdk\emulator\emulator.exe -avd Pixel_5_API_34`
+
+### 软件测试方法
+- 单元测试：
+  - 适用于 ViewModel、工具类、解析逻辑、Room/Moshi 转换、播放器辅助逻辑。
+  - 命令：`./gradlew testDebugUnitTest`
+- 仪器测试：
+  - 适用于页面导航、Room/系统服务集成、需要 Android Framework 的行为验证。
+  - 命令：`./gradlew connectedDebugAndroidTest`
+  - 前提：至少一个模拟器或真机处于 `device` 状态，禁止在 `offline`/`unauthorized` 状态下宣称测试通过。
+- 冒烟测试：
+  - 每次修改播放器、存储、TV 焦点或启动流程后，至少验证“启动应用 -> 进入核心页面 -> 执行一次返回/播放/设置操作 -> 退出页面”。
+  - TV 相关改动必须只用 DPAD 完成一次主路径验证，并确认焦点可见、可达、可返回。
+- 回归测试：
+  - 涉及 `player_component`、`storage_component`、`local_component`、`user_component` 的交互改动时，除对应模块功能外，还要补测设置持久化、页面返回栈、异常提示与恢复路径。
+- 构建验证：
+  - 至少执行一次与改动范围匹配的 Gradle 构建或测试命令。
+  - 汇报结果前，必须查看 Gradle 输出尾部，明确确认是 `BUILD SUCCESSFUL` 还是 `BUILD FAILED`。
+
+### 基于 AVD 的推荐测试流程
+1. 检查设备状态：
+   - `adb devices -l`
+2. 若没有可用设备，启动 AVD：
+   - `C:\Android\Sdk\emulator\emulator.exe -avd Pixel_5_API_34`
+3. 等待设备完成启动：
+   - `adb -s emulator-5554 wait-for-device`
+   - `adb -s emulator-5554 shell getprop sys.boot_completed`
+4. 安装并执行测试：
+   - `./gradlew installDebug`
+   - `./gradlew connectedDebugAndroidTest`
+5. 失败时保留证据：
+   - `adb -s emulator-5554 logcat -d`
+   - 如需界面证据，可补充 `adb -s emulator-5554 exec-out screencap -p > <path>`
+
+### 模拟器交互式测试建议
+- 优先使用 `adb` 驱动的可复现操作，而不是只凭手工点击描述问题。
+- 推荐流程：
+  - `adb -s emulator-5554 shell am start -n <package>/<activity>`
+  - `adb -s emulator-5554 exec-out uiautomator dump /dev/tty`
+  - `adb -s emulator-5554 shell input keyevent 19|20|21|22|23|4`
+- 说明：
+  - `19/20/21/22/23/4` 分别对应 `DPAD_UP`、`DPAD_DOWN`、`DPAD_LEFT`、`DPAD_RIGHT`、`DPAD_CENTER`、`BACK`。
+  - 对 TV 页面，提交前应至少覆盖一次纯 DPAD 导航，不允许只验证触摸路径。
+
 ## Commit & Pull Request Guidelines
 Recent history uses the `<type>: <summary>` pattern (`fix: ...`, `refactor: ...`); keep summaries under ~60 characters and describe scope (e.g., `player_component`). Squash noisy WIP commits before pushing. PRs must include: purpose, affected modules, test evidence (command + result), and UI screenshots when touching layouts. Link GitHub issues and note any required configuration toggles (`IS_APPLICATION_RUN`, `IS_DEBUG_MODE`).
 
@@ -252,12 +331,10 @@ Sensitive tokens belong in `local.properties` or Gradle properties; never hard-c
 - 所有可操作控件均有清晰 focused 反馈（视觉高亮一致、可辨识）。
 
 ## Active Technologies
-- Kotlin 1.9.25 (JVM target 1.8), Android Gradle Plugin 8.7.2 + AndroidX (Lifecycle/ViewModel/Room, etc.), Kotlin Coroutines, Retrofit/OkHttp, Moshi, Media3, ARouter, MMKV (001-115-cloud-storage)
-- Room (SQLite) + MMKV (Key-Value) + local cache files (for temporary MPD/QR images, etc.) (001-115-cloud-storage)
-- Kotlin 1.9.25 (JVM target 1.8), Android Gradle Plugin 8.7.2 + AndroidX, Kotlin Coroutines, Retrofit + OkHttp, Moshi, Room, MMKV, Media3, NanoHTTPD (local proxy), ARouter (001-baidu-pan-storage)
-- Room (tables like `media_library`) + MMKV (preferences/login state storage) + local cache files (subtitles/danmaku/temporary manifests, etc.) (001-baidu-pan-storage)
-- Room (tables like `media_library`) + MMKV (preferences/authorization-isolated storage) + local cache files (subtitles/danmaku/temporary manifests, etc.) (001-115-open-storage)
-- Kotlin 1.9.25（JVM target 1.8），Android Gradle Plugin 8.7.2，Gradle 8.9 + AndroidX、Kotlin Coroutines、Retrofit+OkHttp、Moshi、Room、MMKV、Media3（可开关）、NanoHTTPD（本地代理）、ARouter、ktlint（`org.jlleitschuh.gradle.ktlint`） (001-code-quality-audit)
-- Room（SQLite）+ MMKV（Key-Value）+ 本地缓存文件（字幕/弹幕/临时清单/图片等） (001-code-quality-audit)
-- Kotlin 1.9.25 (JVM target 1.8), Java 8 + Android Gradle Plugin 8.7.2, AndroidX Test/JUnit4, Robolectric 4.12.2, Kotlin Coroutines Test, SonarCloud Scan Action v6 (001-fix-sonarcloud-issues)
-- N/A（不新增业务持久化）；使用 `.sonarcloud-report/` 作为分析输入与 `specs/001-fix-sonarcloud-issues/` 文档产出 (001-fix-sonarcloud-issues)
+- Kotlin `1.9.25`（JVM target `1.8`）、Android Gradle Plugin `8.7.2`、Gradle `8.9`
+- AndroidX（Lifecycle/ViewModel、Room、Preference、RecyclerView、Startup 等）、Kotlin Coroutines、ARouter
+- 网络与数据：Retrofit + OkHttp、Moshi、Room、MMKV
+- 播放与媒体：Media3（可开关）、ExoPlayer 2、VLC、弹幕/字幕渲染、本地代理（NanoHTTPD）
+- 存储与集成：Bilibili 能力集成、多协议存储、7zip、thunder、video cache
+- 工程与质量：ktlint（`org.jlleitschuh.gradle.ktlint`）、JaCoCo、SonarCloud workflow（`SonarSource/sonarqube-scan-action@v6`）
+- 测试：JUnit4、AndroidX Test、Robolectric `4.16.1`、Kotlin Coroutines Test

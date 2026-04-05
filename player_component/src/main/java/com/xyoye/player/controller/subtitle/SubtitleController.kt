@@ -109,4 +109,8 @@ class SubtitleController(
     fun reloadExternalTrack() {
         externalSubtitleView.reloadCurrentTrack()
     }
+
+    fun clearExternalTrack() {
+        externalSubtitleView.clearTrack()
+    }
 }

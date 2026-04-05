@@ -57,6 +57,7 @@ import com.xyoye.data_component.media3.entity.PlaybackSession
 import com.xyoye.data_component.media3.entity.PlayerCapabilityContract
 import com.xyoye.data_component.enums.DanmakuLanguage
 import com.xyoye.data_component.enums.MediaType
+import com.xyoye.data_component.enums.PlayState
 import com.xyoye.data_component.enums.PlayerType
 import com.xyoye.data_component.enums.SubtitleFallbackReason
 import com.xyoye.data_component.enums.SurfaceType
@@ -72,6 +73,13 @@ import com.xyoye.player.utils.PlaybackErrorFormatter
 import com.xyoye.player_component.BR
 import com.xyoye.player_component.R
 import com.xyoye.player_component.databinding.ActivityPlayerBinding
+import com.xyoye.player_component.sequential.FallbackSequentialPlaybackAdapter
+import com.xyoye.player_component.sequential.Media3SequentialPlaybackAdapter
+import com.xyoye.player_component.sequential.SequentialPlaybackCoordinator
+import com.xyoye.player_component.sequential.SequentialPlaybackFallbackSwitcher
+import com.xyoye.player_component.sequential.SequentialPlaybackStateApplier
+import com.xyoye.player_component.sequential.SequentialPlaybackTransition
+import com.xyoye.player_component.utils.PlayRecorder
 import com.xyoye.player_component.widgets.popup.PlayerPopupManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -97,6 +105,7 @@ class PlayerActivity :
         private const val TAG_CONFIG = "PlayerConfig"
         private const val TAG_CAST = "PlayerCast"
         private const val TAG_MEDIA3 = "Media3Session"
+        private const val TAG_SEQUENTIAL = "SequentialPlayback"
         private const val BACK_EXIT_CONFIRM_WINDOW_MS = 1500L
     }
 
@@ -151,6 +160,38 @@ class PlayerActivity :
     private var playbackRecoveryAttempts: Int = 0
     private var pendingSeekPositionMs: Long? = null
     private val exitConfirmGuard = BackPressExitConfirmGuard(BACK_EXIT_CONFIRM_WINDOW_MS)
+    private val media3SequentialPlaybackAdapter: Media3SequentialPlaybackAdapter by lazy {
+        Media3SequentialPlaybackAdapter.create { danDanPlayer.exoPlayerOrNull() }
+    }
+    private val fallbackSequentialPlaybackAdapter = FallbackSequentialPlaybackAdapter()
+    private val sequentialPlaybackCoordinator: SequentialPlaybackCoordinator by lazy {
+        SequentialPlaybackCoordinator(
+            scope = lifecycleScope,
+            backendAdapterProvider = {
+                if (PlayerInitializer.playerType == PlayerType.TYPE_EXO_PLAYER) {
+                    media3SequentialPlaybackAdapter
+                } else {
+                    fallbackSequentialPlaybackAdapter
+                }
+            },
+            stateApplier =
+                SequentialPlaybackStateApplier { transition ->
+                    applySequentialPlaybackTransition(transition)
+                },
+            fallbackSwitcher = SequentialPlaybackFallbackSwitcher { index -> switchVideoSource(index) },
+            isAutoPlayNextEnabled = { PlayerInitializer.Player.isAutoPlayNext },
+        )
+    }
+    private val sequentialPlayStateListener: (PlayState) -> Unit = { playState ->
+        when (playState) {
+            PlayState.STATE_PLAYING -> sequentialPlaybackCoordinator.onPlaybackStable()
+            PlayState.STATE_ERROR,
+            PlayState.STATE_IDLE,
+            PlayState.STATE_START_ABORT
+            -> sequentialPlaybackCoordinator.invalidateActiveSession()
+            else -> Unit
+        }
+    }
 
     private val media3ServiceConnection =
         object : ServiceConnection {
@@ -222,6 +263,7 @@ class PlayerActivity :
 
         initListener()
 
+        danDanPlayer.addPlayStateListener(sequentialPlayStateListener)
         danDanPlayer.setController(videoController)
         dataBinding.playerContainer.removeAllViews()
         dataBinding.playerContainer.addView(danDanPlayer)
@@ -283,6 +325,8 @@ class PlayerActivity :
 
     override fun onDestroy() {
         LogFacade.d(LogModule.PLAYER, TAG_ACTIVITY, "onDestroy")
+        sequentialPlaybackCoordinator.invalidateActiveSession()
+        danDanPlayer.removePlayStateListener(sequentialPlayStateListener)
         beforePlayExit()
         unregisterReceiver()
         danDanPlayer.release()
@@ -480,6 +524,9 @@ class PlayerActivity :
                 val source = videoSource ?: return@observerTrackAdded
                 viewModel.storeTrackAdded(source, it)
             }
+            observerAutoPlayNext { nextIndex ->
+                sequentialPlaybackCoordinator.onPlaybackCompletionRequested(nextIndex)
+            }
 
             // B站画质/编码切换
             observerPlaybackSettingUpdate { update ->
@@ -549,6 +596,7 @@ class PlayerActivity :
             TAG_SOURCE,
             "apply start title=${newSource?.getVideoTitle()} type=${newSource?.getMediaType()} urlHash=${newSource?.getVideoUrl()?.hashCode()}",
         )
+        sequentialPlaybackCoordinator.invalidateActiveSession()
         val previousSource = videoSource
         if (previousSource != null &&
             (
@@ -578,6 +626,7 @@ class PlayerActivity :
         viewModel.prepareMedia3Session(launchParams)
 
         updatePlayer(videoSource!!)
+        sequentialPlaybackCoordinator.onSourceApplied(videoSource!!, PlayerInitializer.playerType)
 
         afterInitPlayer()
         LogFacade.i(LogModule.PLAYER, TAG_SOURCE, "apply finished title=${videoSource?.getVideoTitle()}")
@@ -616,6 +665,11 @@ class PlayerActivity :
 
     private fun afterInitPlayer() {
         val source = videoSource ?: return
+        restoreSourceScopedState(source)
+    }
+
+    private fun restoreSourceScopedState(source: BaseVideoSource) {
+        videoController.clearSourceScopedState()
 
         // 设置当前视频的父目录（若为本地可访问路径），用于字幕/字体同目录检索
         File(source.getVideoUrl()).parentFile?.let { parent ->
@@ -665,6 +719,36 @@ class PlayerActivity :
         if (historyAudio != null) {
             LogFacade.i(LogModule.PLAYER, TAG_SOURCE, "load history path=$historyAudio")
             videoController.addExtendTrack(VideoTrackBean.audio(historyAudio))
+        }
+    }
+
+    private fun applySequentialPlaybackTransition(transition: SequentialPlaybackTransition) {
+        val previousSource = transition.previousSource
+        val nextSource = transition.nextSource
+
+        LogFacade.i(
+            LogModule.PLAYER,
+            TAG_SEQUENTIAL,
+            "transition generation=${transition.sessionToken.generation} queueItemId=${transition.queueItemId.value} from=${previousSource.getVideoTitle()} to=${nextSource.getVideoTitle()}",
+        )
+
+        releasePlaybackAddonIfNeeded(previousSource)
+        PlayRecorder.recordProgress(previousSource, 0, danDanPlayer.getDuration().coerceAtLeast(0L))
+
+        videoSource = nextSource
+        danDanPlayer.setVideoSource(nextSource)
+        VideoSourceManager.getInstance().setSource(nextSource)
+        videoController.setVideoTitle(nextSource.getVideoTitle())
+        restoreSourceScopedState(nextSource)
+
+        val overrideParams = VideoSourceManager.getInstance().consumeMedia3LaunchParams()
+        val launchParams = viewModel.buildMedia3LaunchParams(nextSource, overrideParams)
+        viewModel.prepareMedia3Session(launchParams)
+        dispatchPlaybackSourceChangedEvent(nextSource)
+
+        val resumePosition = nextSource.getCurrentPosition()
+        if (resumePosition > 0 && danDanPlayer.isSeekable()) {
+            danDanPlayer.seekTo(resumePosition)
         }
     }
 
@@ -1127,6 +1211,7 @@ class PlayerActivity :
     }
 
     private fun beforePlayExit() {
+        sequentialPlaybackCoordinator.invalidateActiveSession()
         val source = videoSource ?: return
         if (source is StorageVideoSource && source.getMediaType() == MediaType.MAGNET_LINK) {
             PlayTaskBridge.sendTaskRemoveMsg(source.getPlayTaskId())

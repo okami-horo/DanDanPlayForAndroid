@@ -20,6 +20,7 @@ import com.xyoye.common_component.log.LogFacade
 import com.xyoye.common_component.log.model.LogModule
 import com.xyoye.common_component.source.base.BaseVideoSource
 import com.xyoye.data_component.bean.VideoTrackBean
+import com.xyoye.data_component.enums.MediaType
 import com.xyoye.data_component.enums.PlayState
 import com.xyoye.data_component.enums.TrackType
 import com.xyoye.data_component.enums.VideoScreenScale
@@ -61,6 +62,8 @@ class DanDanVideoPlayer(
     InterVideoPlayer,
     InterVideoTrack,
     VideoPlayerEventListener {
+    private val playStateListeners = LinkedHashSet<(PlayState) -> Unit>()
+
     // 播放状态
     private var mCurrentPlayState = PlayState.STATE_IDLE
 
@@ -295,11 +298,54 @@ class DanDanVideoPlayer(
     }
 
     override fun onCompletion() {
+        val durationMs = getDuration().coerceAtLeast(0L)
+        val rawPositionMs = getCurrentPosition()
+        val positionMs =
+            if (rawPositionMs > 0) {
+                rawPositionMs
+            } else {
+                lastKnownPositionMs
+            }.coerceAtLeast(0L)
+
+        val isBilibiliSource =
+            this::videoSource.isInitialized &&
+                videoSource.getMediaType() == MediaType.BILIBILI_STORAGE
+
+        if (mCurrentPlayState != PlayState.STATE_ERROR && isBilibiliSource) {
+            val isLive = isLive()
+            val isUnexpectedCompletion = isLive || isUnexpectedBilibiliLongVideoCompletion(positionMs, durationMs)
+            if (isUnexpectedCompletion) {
+                // Preserve progress for recovery fallback, then reroute into the existing error-recovery flow.
+                PlayRecorder.recordProgress(videoSource, positionMs, durationMs)
+
+                val title = videoSource.getVideoTitle()
+                val message =
+                    "unexpected completion title=$title isLive=$isLive positionMs=$positionMs durationMs=$durationMs lastKnownPositionMs=$lastKnownPositionMs"
+                lastPlaybackError = IllegalStateException(message)
+                LogFacade.w(LogModule.PLAYER, TAG_PLAYBACK, message)
+
+                setPlayState(PlayState.STATE_ERROR)
+                keepScreenOn = false
+                return
+            }
+        }
+
         if (mCurrentPlayState != PlayState.STATE_ERROR) {
             setPlayState(PlayState.STATE_COMPLETED)
         }
         keepScreenOn = false
-        PlayRecorder.recordProgress(videoSource, 0, getDuration())
+        PlayRecorder.recordProgress(videoSource, 0, durationMs)
+    }
+
+    private fun isUnexpectedBilibiliLongVideoCompletion(
+        positionMs: Long,
+        durationMs: Long,
+    ): Boolean {
+        if (durationMs <= 0L) return false
+        if (durationMs < BILIBILI_LONG_VIDEO_MIN_DURATION_MS) return false
+
+        val remainingMs = (durationMs - positionMs.coerceAtLeast(0L)).coerceAtLeast(0L)
+        return remainingMs > BILIBILI_COMPLETION_TRUST_WINDOW_MS
     }
 
     override fun onInfo(
@@ -433,6 +479,9 @@ class DanDanVideoPlayer(
     private fun setPlayState(playState: PlayState) {
         mCurrentPlayState = playState
         mVideoController?.setPlayState(playState)
+        playStateListeners.toList().forEach { listener ->
+            listener.invoke(playState)
+        }
     }
 
     private fun isInPlayState(): Boolean =
@@ -560,6 +609,14 @@ class DanDanVideoPlayer(
         mVideoController?.setPopupGestureHandler(handler)
     }
 
+    fun addPlayStateListener(listener: (PlayState) -> Unit) {
+        playStateListeners.add(listener)
+    }
+
+    fun removePlayStateListener(listener: (PlayState) -> Unit) {
+        playStateListeners.remove(listener)
+    }
+
     override fun updateSubtitleOffsetTime() {
         SubtitlePreferenceUpdater.persistOffset(PlayerInitializer.Subtitle.offsetPosition)
         if (this::mVideoPlayer.isInitialized && mCurrentPlayState != PlayState.STATE_IDLE) {
@@ -630,5 +687,8 @@ class DanDanVideoPlayer(
 
     private companion object {
         private const val TAG_PLAYBACK = "PlayerPlayback"
+
+        private const val BILIBILI_LONG_VIDEO_MIN_DURATION_MS = 10 * 60_000L
+        private const val BILIBILI_COMPLETION_TRUST_WINDOW_MS = 30_000L
     }
 }

@@ -41,7 +41,8 @@ object Media3MediaSourceHelper {
         uri: String,
         headers: Map<String, String>? = null,
         isCacheEnabled: Boolean = false,
-        parseSubtitlesDuringExtraction: Boolean = true
+        parseSubtitlesDuringExtraction: Boolean = true,
+        mediaId: String? = null,
     ): MediaSource {
         val contentUri = Uri.parse(uri)
         val normalizedMime = Media3FormatUtil.normalizeMime(appContext, contentUri)
@@ -50,6 +51,11 @@ object Media3MediaSourceHelper {
                 .Builder()
                 .setUri(contentUri)
                 .setMimeType(normalizedMime)
+                .apply {
+                    if (!mediaId.isNullOrBlank()) {
+                        setMediaId(mediaId)
+                    }
+                }
 
         val headersWithDefaults = headers?.toMap()
 

@@ -66,6 +66,7 @@ class VideoController(
     private var lastVideoSpeed: Float? = null
 
     private var switchVideoSourceBlock: ((Int) -> Unit)? = null
+    private var autoPlayNextBlock: ((Int) -> Unit)? = null
     private var trackAddedBlock: ((VideoTrackBean) -> Unit)? = null
 
     init {
@@ -133,7 +134,8 @@ class VideoController(
             if (PlayerInitializer.Player.isAutoPlayNext) {
                 val videoSource = mControlWrapper.getVideoSource()
                 if (videoSource.hasNextSource()) {
-                    switchVideoSourceBlock?.invoke(videoSource.getGroupIndex() + 1)
+                    val nextIndex = videoSource.getGroupIndex() + 1
+                    autoPlayNextBlock?.invoke(nextIndex) ?: switchVideoSourceBlock?.invoke(nextIndex)
                     return
                 }
             }
@@ -158,9 +160,8 @@ class VideoController(
     }
 
     override fun release() {
-        super.release()
+        clearSourceScopedState()
         lastPlayPosition = 0
-        playerControlView.clearMessage()
     }
 
     override fun destroy() {
@@ -253,6 +254,17 @@ class VideoController(
         this.switchVideoSourceBlock = block
         playerBotView.setSwitchVideoSourceBlock(block)
         mSettingController.setSwitchVideoSourceBlock(block)
+    }
+
+    fun observerAutoPlayNext(block: (Int) -> Unit) {
+        autoPlayNextBlock = block
+    }
+
+    fun clearSourceScopedState() {
+        mDanmuController.danmuRelease()
+        mSubtitleController.clearExternalTrack()
+        mSettingController.hideSettingView()
+        playerControlView.clearMessage()
     }
 
     /**
