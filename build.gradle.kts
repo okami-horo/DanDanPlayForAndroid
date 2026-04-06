@@ -4,6 +4,8 @@ import org.jlleitschuh.gradle.ktlint.KtlintExtension
 import org.gradle.api.GradleException
 import org.gradle.testing.jacoco.plugins.JacocoPluginExtension
 import org.gradle.testing.jacoco.tasks.JacocoReport
+import org.gradle.testing.jacoco.tasks.JacocoCoverageVerification
+import java.math.BigDecimal
 
 buildscript {
     repositories {
@@ -103,6 +105,106 @@ tasks {
         }
     }
 
+    // -----------------------------------------------------------------
+    // Coverage baseline verification gate (task 4.1 / 4.2)
+    // Checks that coverage for medium/high-coverage modules does not
+    // regress below the recorded baseline.  Thresholds are intentionally
+    // set below the current measured values to catch regressions without
+    // blocking new development.
+    //
+    // Baseline snapshot (measured 2026-04):
+    //   core_log_component   57.2 %   → gate 50 %
+    //   bilibili_component   17.2 %   → gate 15 %
+    //   core_ui_component    19.0 %   → gate 15 %
+    //   core_storage_comp.    6.4 %   → gate  5 %
+    //   core_database_comp.   6.9 %   → gate  5 %
+    //   core_network_comp.    3.0 %   → gate  2 %
+    //   player_component      6.2 %   → gate  5 %
+    //   data_component        7.8 %   → gate  5 %
+    //
+    // Run: ./gradlew verifyCoverageBaseline
+    // -----------------------------------------------------------------
+    register<JacocoCoverageVerification>("verifyCoverageBaseline") {
+        group = "verification"
+        description =
+            "Verifies that coverage for priority modules does not regress below the recorded baseline."
+        dependsOn("jacocoTestReport")
+
+        violationRules {
+            // core_log_component — already well-tested, protect >50 %
+            rule {
+                element = "PACKAGE"
+                includes = listOf("com/xyoye/common_component/log/**")
+                limit {
+                    counter = "LINE"
+                    value = "COVEREDRATIO"
+                    minimum = BigDecimal("0.50")
+                }
+            }
+
+            // bilibili_component — gateway for playback, protect >15 %
+            rule {
+                element = "PACKAGE"
+                includes = listOf("com/xyoye/common_component/bilibili/**")
+                limit {
+                    counter = "LINE"
+                    value = "COVEREDRATIO"
+                    minimum = BigDecimal("0.15")
+                }
+            }
+
+            // core_ui_component (adapter/preference) — protect >15 %
+            rule {
+                element = "PACKAGE"
+                includes = listOf(
+                    "com/xyoye/common_component/adapter/**",
+                    "com/xyoye/common_component/preference/**",
+                )
+                limit {
+                    counter = "LINE"
+                    value = "COVEREDRATIO"
+                    minimum = BigDecimal("0.15")
+                }
+            }
+
+            // player_component — complex, protect >5 %
+            rule {
+                element = "PACKAGE"
+                includes = listOf(
+                    "com/xyoye/player_component/**",
+                    "com/xyoye/player/**",
+                )
+                limit {
+                    counter = "LINE"
+                    value = "COVEREDRATIO"
+                    minimum = BigDecimal("0.05")
+                }
+            }
+
+            // core_storage_component — protect >5 %
+            rule {
+                element = "PACKAGE"
+                includes = listOf("com/xyoye/common_component/storage/**")
+                limit {
+                    counter = "LINE"
+                    value = "COVEREDRATIO"
+                    minimum = BigDecimal("0.05")
+                }
+            }
+
+            // data_component — models/DTOs, protect >5 %
+            rule {
+                element = "PACKAGE"
+                includes = listOf("com/xyoye/data_component/**")
+                limit {
+                    counter = "LINE"
+                    value = "COVEREDRATIO"
+                    minimum = BigDecimal("0.05")
+                }
+            }
+        }
+    }
+
     register<VerifyModuleDependenciesTask>("verifyModuleDependencies")
     register<VerifyLegacyPagerApisTask>("verifyLegacyPagerApis")
 
@@ -186,6 +288,50 @@ gradle.projectsEvaluated {
                 )
             }
         }
+    }
+
+    // Wire verifyCoverageBaseline with the same source/class/exec data as jacocoTestReport.
+    tasks.named<JacocoCoverageVerification>("verifyCoverageBaseline").configure {
+        val sourceDirs =
+            coverageProjects.flatMap { project ->
+                listOf(
+                    project.file("src/main/java"),
+                    project.file("src/main/kotlin"),
+                )
+            }
+        val classDirs =
+            coverageProjects.flatMap { project ->
+                val projectBuildDir = project.layout.buildDirectory.asFile.get()
+                listOf(
+                    project.fileTree("${projectBuildDir}/tmp/kotlin-classes/debug") {
+                        exclude(jacocoClassExcludes)
+                    },
+                    project.fileTree("${projectBuildDir}/intermediates/javac/debug/classes") {
+                        exclude(jacocoClassExcludes)
+                    },
+                    project.fileTree("${projectBuildDir}/intermediates/javac/debug/compileDebugJavaWithJavac/classes") {
+                        exclude(jacocoClassExcludes)
+                    },
+                    project.fileTree("${projectBuildDir}/classes/kotlin/debug") {
+                        exclude(jacocoClassExcludes)
+                    },
+                )
+            }
+        val execData =
+            coverageProjects.flatMap { project ->
+                val projectBuildDir = project.layout.buildDirectory.asFile.get()
+                listOf(
+                    project.file("${projectBuildDir}/jacoco/testDebugUnitTest.exec"),
+                    project.file("${projectBuildDir}/outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec"),
+                    project.fileTree("${projectBuildDir}/outputs/code_coverage/debugAndroidTest/connected") {
+                        include("**/*.ec")
+                    },
+                )
+            }
+
+        sourceDirectories.setFrom(sourceDirs)
+        classDirectories.setFrom(classDirs)
+        executionData.setFrom(execData)
     }
 
     tasks.named("verifyArchitectureGovernance").configure {

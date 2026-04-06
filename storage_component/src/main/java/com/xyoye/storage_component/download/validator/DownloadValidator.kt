@@ -12,7 +12,10 @@ class DownloadValidator(
     private val media3Version: String = BuildConfig.MEDIA3_VERSION,
     private val validateCall: suspend (DownloadValidationRequestData) -> Result<DownloadValidationResponseData> = { request ->
         Media3Repository.validateDownload(request)
-    }
+    },
+    private val onCheckPersisted: suspend (DownloadAssetCheck) -> Unit = { check ->
+        Media3LocalStore.upsertDownloadCheck(check)
+    },
 ) {
     suspend fun validate(
         downloadId: String,
@@ -39,7 +42,7 @@ class DownloadValidator(
                 requiredAction = response.requiredAction,
                 verificationLogs = response.verificationLogs,
             )
-        Media3LocalStore.upsertDownloadCheck(history)
+        onCheckPersisted(history)
         return when (response.requiredAction) {
             DownloadRequiredAction.NONE ->
                 ValidationOutcome.AllowPlayback(
@@ -73,3 +76,4 @@ class DownloadValidator(
         ) : ValidationOutcome()
     }
 }
+

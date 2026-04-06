@@ -15,7 +15,7 @@ class AnimeHistoryViewModel : BaseViewModel() {
 
     val displayHistoriesFlow =
         combine(historiesFlow, searchWordFlow) { histories, searchWord ->
-            combineAnimeFilter(histories, searchWord)
+            filterAnimeHistory(histories, searchWord)
         }
 
     fun getCloudHistory() {
@@ -36,15 +36,22 @@ class AnimeHistoryViewModel : BaseViewModel() {
     fun searchAnime(keyword: String) {
         searchWordFlow.value = keyword
     }
-
-    private fun combineAnimeFilter(
-        histories: List<AnimeData>,
-        searchWord: String
-    ): List<AnimeData> {
-        if (searchWord.isEmpty()) {
-            return histories
-        }
-
-        return histories.filter { it.animeTitle?.contains(searchWord, ignoreCase = true) == true }
-    }
 }
+
+/**
+ * Filters [histories] by [searchWord] using case-insensitive title matching.
+ * Returns the full list when [searchWord] is empty.
+ *
+ * Extracted as a package-internal function to allow direct unit testing without
+ * requiring a ViewModel instance or Android runtime.
+ */
+internal fun filterAnimeHistory(
+    histories: List<AnimeData>,
+    searchWord: String,
+): List<AnimeData> {
+    if (searchWord.isEmpty()) {
+        return histories
+    }
+    return histories.filter { it.animeTitle?.contains(searchWord, ignoreCase = true) == true }
+}
+
