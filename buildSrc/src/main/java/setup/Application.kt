@@ -30,11 +30,24 @@ fun Project.applicationSetup() {
             buildConfig = true
         }
 
+        buildTypes {
+            getByName("debug") {
+                enableUnitTestCoverage = true
+            }
+        }
+
         testOptions {
             unitTests.isIncludeAndroidResources = true
             unitTests.isReturnDefaultValues = true
             unitTests.all {
                 it.systemProperty("robolectric.enabledSdks", Versions.targetSdkVersion.toString())
+                // JDK 17 requires --add-opens for Robolectric and JaCoCo instrumentation
+                it.jvmArgs(
+                    "--add-opens=java.base/java.lang=ALL-UNNAMED",
+                    "--add-opens=java.base/java.io=ALL-UNNAMED",
+                    "--add-opens=java.base/java.util=ALL-UNNAMED",
+                    "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
+                )
             }
         }
 

@@ -313,7 +313,14 @@ class DanDanVideoPlayer(
 
         if (mCurrentPlayState != PlayState.STATE_ERROR && isBilibiliSource) {
             val isLive = isLive()
-            val isUnexpectedCompletion = isLive || isUnexpectedBilibiliLongVideoCompletion(positionMs, durationMs)
+            val isUnexpectedCompletion =
+                BilibiliCompletionTrust.isUnexpectedCompletion(
+                    BilibiliCompletionContext(
+                        isLive = isLive,
+                        positionMs = positionMs,
+                        durationMs = durationMs,
+                    ),
+                )
             if (isUnexpectedCompletion) {
                 // Preserve progress for recovery fallback, then reroute into the existing error-recovery flow.
                 PlayRecorder.recordProgress(videoSource, positionMs, durationMs)
@@ -335,17 +342,6 @@ class DanDanVideoPlayer(
         }
         keepScreenOn = false
         PlayRecorder.recordProgress(videoSource, 0, durationMs)
-    }
-
-    private fun isUnexpectedBilibiliLongVideoCompletion(
-        positionMs: Long,
-        durationMs: Long,
-    ): Boolean {
-        if (durationMs <= 0L) return false
-        if (durationMs < BILIBILI_LONG_VIDEO_MIN_DURATION_MS) return false
-
-        val remainingMs = (durationMs - positionMs.coerceAtLeast(0L)).coerceAtLeast(0L)
-        return remainingMs > BILIBILI_COMPLETION_TRUST_WINDOW_MS
     }
 
     override fun onInfo(
@@ -687,8 +683,5 @@ class DanDanVideoPlayer(
 
     private companion object {
         private const val TAG_PLAYBACK = "PlayerPlayback"
-
-        private const val BILIBILI_LONG_VIDEO_MIN_DURATION_MS = 10 * 60_000L
-        private const val BILIBILI_COMPLETION_TRUST_WINDOW_MS = 30_000L
     }
 }
