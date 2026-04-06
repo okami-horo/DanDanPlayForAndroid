@@ -2,7 +2,7 @@
 
 # DDPlayTV Privacy Policy
 
-Last updated: 2026-02-12
+Last updated: 2026-04-06
 
 DDPlayTV is an open-source local media player. This document describes what this repository version does (and does not) collect when you use the app.
 
@@ -44,8 +44,9 @@ The app may request permissions to enable specific features. The declared permis
 - Install packages: `REQUEST_INSTALL_PACKAGES` (only used when you choose to install an APK from the app)
 - Background playback: `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK`
 - Local network discovery: `CHANGE_WIFI_MULTICAST_STATE`
+- Camera: the current TV-oriented manifest does **not** declare `CAMERA`; if camera/scanning capabilities are re-enabled in future builds, this policy will be updated accordingly
 
-Some permissions may be disabled for TV adaptation builds (see the merged AndroidManifest at build time).
+Some permissions may be disabled for TV adaptation builds (for example, `CAMERA` is currently removed from the main TV-oriented manifest; see the merged AndroidManifest at build time).
 
 ## 5. Logs
 
@@ -70,7 +71,7 @@ If you have questions or want to report an issue, please open an issue on GitHub
 
 # DDPlayTV 隐私政策
 
-最后更新：2026-02-12
+最后更新：2026-04-06
 
 DDPlayTV 是一款开源的本地媒体播放器。本文用于说明**本仓库当前版本**在使用过程中会（或不会）收集/处理哪些数据。
 
@@ -112,8 +113,9 @@ DDPlayTV 是一款开源的本地媒体播放器。本文用于说明**本仓库
 - 安装 APK：`REQUEST_INSTALL_PACKAGES`（仅在你选择从应用内安装 APK 时使用）
 - 后台播放：`FOREGROUND_SERVICE`、`FOREGROUND_SERVICE_MEDIA_PLAYBACK`
 - 局域网发现：`CHANGE_WIFI_MULTICAST_STATE`
+- 摄像头：当前 TV 适配主线默认**不声明** `CAMERA` 权限；若未来重新启用扫码/摄像能力，本文会同步更新
 
-部分权限可能会因 TV 适配而被禁用（以构建时合并后的 AndroidManifest 为准）。
+部分权限可能会因 TV 适配而被禁用（例如当前主线已移除 `CAMERA` 声明；以构建时合并后的 AndroidManifest 为准）。
 
 ## 5. 日志
 

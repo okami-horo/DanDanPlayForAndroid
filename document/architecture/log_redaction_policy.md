@@ -2,7 +2,7 @@
 
 ## 背景
 
-仓库在 `document/code_quality_audit` 中明确了“日志/异常上报默认脱敏”的治理目标（对应 `G-T0012`）。  
+本仓库将“日志/异常上报默认脱敏”作为长期治理要求；当前以本文与 `document/monitoring/logging-system.md` 作为维护基线。  
 核心诉求是：在 **logcat / HTTP 对外日志 / 异常上报上下文** 中，默认不泄露 token、cookie、密码、secret、URL query 等敏感信息，同时仍保留足够的定位线索（host/path、指纹等）。
 
 ## 统一入口

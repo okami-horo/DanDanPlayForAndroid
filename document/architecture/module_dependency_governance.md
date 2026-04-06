@@ -17,8 +17,8 @@
 ## 快速入口（治理基线）
 
 - 当前直接依赖快照（自动生成）：`document/architecture/module_dependencies_snapshot.md`
-- 快照生成脚本：`python3 scripts/module_deps_snapshot.py --write`
-- 自动化校验：`./gradlew verifyModuleDependencies`（推荐统一门禁：`./gradlew verifyArchitectureGovernance`；CI：`.github/workflows/module-dependency-governance.yml`）
+- 快照生成脚本：`python scripts/module_deps_snapshot.py --write`（Windows）/ `python3 scripts/module_deps_snapshot.py --write`（Linux/macOS）
+- 自动化校验：`./gradlew verifyModuleDependencies`（推荐统一门禁：`./gradlew verifyArchitectureGovernance`；当前仓库暂无专用 governance workflow，若需接入 CI 请在现有 workflow 中显式调用）
 
 ---
 
@@ -383,10 +383,13 @@ graph TD
 - 执行：`./gradlew verifyModuleDependencies`
 - 失败时输出：按“模块 -> configuration -> 违例依赖”列出，并指向本文档作为规则依据
 
-### 5.3 CI 校验（PR）
+### 5.3 CI 校验（当前仓库现状）
 
-- workflow：`.github/workflows/module-dependency-governance.yml`
-- 触发：`pull_request`
+- 当前仓库**未提供**专用的 `.github/workflows/module-dependency-governance.yml`
+- 现有 workflow 主要覆盖打包与 SonarCloud，不会自动执行 `verifyModuleDependencies` / `verifyArchitectureGovernance`
+- 如需在 PR 中启用依赖治理校验，建议在现有 workflow 中显式增加：
+  - `./gradlew verifyModuleDependencies`
+  - 或统一入口 `./gradlew verifyArchitectureGovernance`
 
 ### 5.4 规则变更流程（新增模块/新增依赖）
 
@@ -402,7 +405,7 @@ graph TD
 1) 更新本文档的允许矩阵/白名单（含 DR）  
 2) 同步更新 `buildSrc/src/main/java/governance/ModuleDependencyGovernance.kt` 的矩阵/白名单  
 3) 运行 `./gradlew verifyModuleDependencies`，确认输出以 `BUILD SUCCESSFUL` 结束  
-4) 如涉及依赖结构变化，同步更新依赖快照：`python3 scripts/module_deps_snapshot.py --write`
+4) 如涉及依赖结构变化，同步更新依赖快照：`python scripts/module_deps_snapshot.py --write`（Windows）/ `python3 scripts/module_deps_snapshot.py --write`（Linux/macOS）
 
 ---
 
