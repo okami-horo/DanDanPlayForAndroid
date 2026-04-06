@@ -102,6 +102,12 @@ interface BilibiliService {
         @QueryMap params: Map<String, @JvmSuppressWildcards Any>
     ): BilibiliJsonModel<BilibiliHistoryCursorData>
 
+    @GET("/x/v2/history/shadow")
+    suspend fun historyStatus(
+        @Header(HeaderKey.BASE_URL) baseUrl: String,
+        @Query("jsonp") jsonp: String = "jsonp"
+    ): BilibiliJsonModel<Boolean>
+
     @GET("/xlive/web-ucenter/user/following")
     suspend fun liveFollow(
         @Header(HeaderKey.BASE_URL) baseUrl: String,

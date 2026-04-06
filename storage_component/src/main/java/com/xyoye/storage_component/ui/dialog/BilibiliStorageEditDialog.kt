@@ -8,6 +8,8 @@ import com.xyoye.common_component.bilibili.BilibiliApiPreferencesStore
 import com.xyoye.common_component.bilibili.BilibiliApiType
 import com.xyoye.common_component.bilibili.BilibiliDanmakuBlockPreferences
 import com.xyoye.common_component.bilibili.BilibiliDanmakuBlockPreferencesStore
+import com.xyoye.common_component.bilibili.BilibiliHistorySyncMode
+import com.xyoye.common_component.bilibili.BilibiliHistorySyncPreferencesStore
 import com.xyoye.common_component.bilibili.BilibiliPlayMode
 import com.xyoye.common_component.bilibili.BilibiliPlaybackPreferences
 import com.xyoye.common_component.bilibili.BilibiliPlaybackPreferencesStore
@@ -17,6 +19,8 @@ import com.xyoye.common_component.bilibili.auth.BilibiliAuthStore
 import com.xyoye.common_component.bilibili.auth.BilibiliCookieJarStore
 import com.xyoye.common_component.bilibili.cdn.BilibiliCdnService
 import com.xyoye.common_component.bilibili.cleanup.BilibiliCleanup
+import com.xyoye.common_component.bilibili.history.BilibiliHistoryStatus
+import com.xyoye.common_component.bilibili.repository.BilibiliRepository
 import com.xyoye.common_component.config.PlayerActions
 import com.xyoye.common_component.extension.setTextColorRes
 import com.xyoye.common_component.network.config.Api
@@ -40,6 +44,8 @@ class BilibiliStorageEditDialog(
     private lateinit var editLibrary: MediaLibraryEntity
     private var apiPreferences = BilibiliApiPreferences()
     private var preferences = BilibiliPlaybackPreferences()
+    private var historySyncMode = BilibiliHistorySyncMode.AUTO
+    private var historyStatus: BilibiliHistoryStatus? = null
     private var danmakuBlockPreferences = BilibiliDanmakuBlockPreferences()
     private lateinit var autoSaveHelper: StorageAutoSaveHelper
 
@@ -79,9 +85,12 @@ class BilibiliStorageEditDialog(
 
         apiPreferences = BilibiliApiPreferencesStore.read(editLibrary)
         preferences = BilibiliPlaybackPreferencesStore.read(editLibrary)
+        historySyncMode = BilibiliHistorySyncPreferencesStore.read(editLibrary)
+        historyStatus = buildRepository().history.cachedHistoryStatusOrNull()
         danmakuBlockPreferences = BilibiliDanmakuBlockPreferencesStore.read(editLibrary)
         refreshPreferenceViews()
         refreshAuthViews()
+        refreshHistoryStatus(forceRefresh = false)
 
         binding.authActionTv.setOnClickListener { showLoginDialog() }
         binding.apiTypeActionTv.setOnClickListener { showApiTypeDialog() }
@@ -91,8 +100,8 @@ class BilibiliStorageEditDialog(
         binding.cdnActionTv.setOnClickListener { showCdnDialog() }
         binding.allow4kOnTv.setOnClickListener { updateAllow4k(true) }
         binding.allow4kOffTv.setOnClickListener { updateAllow4k(false) }
-        binding.heartbeatOnTv.setOnClickListener { updateHeartbeatReport(true) }
-        binding.heartbeatOffTv.setOnClickListener { updateHeartbeatReport(false) }
+        binding.historySyncAutoTv.setOnClickListener { updateHistorySyncMode(BilibiliHistorySyncMode.AUTO) }
+        binding.historySyncOffTv.setOnClickListener { updateHistorySyncMode(BilibiliHistorySyncMode.DISABLED) }
         binding.aiBlockOnTv.setOnClickListener { updateAiBlock(true) }
         binding.aiBlockOffTv.setOnClickListener { updateAiBlock(false) }
         binding.aiLevelActionTv.setOnClickListener { showAiLevelDialog() }
@@ -106,7 +115,7 @@ class BilibiliStorageEditDialog(
                 .Builder(activity)
                 .apply {
                     tips = "提示"
-                    content = "确认断开连接并清除该媒体库的隐私数据？\n\n将清除：Cookie/登录态、API类型偏好、播放偏好、弹幕屏蔽偏好、播放历史/进度、Bilibili 弹幕缓存文件、本地 MPD 播放清单缓存。"
+                    content = "确认断开连接并清除该媒体库的隐私数据？\n\n将清除：Cookie/登录态、API类型偏好、播放偏好、历史同步偏好、服务端历史状态缓存、弹幕屏蔽偏好、播放历史/进度、Bilibili 弹幕缓存文件、本地 MPD 播放清单缓存。"
                     positiveText = "确认清除"
                     addPositive { dialog ->
                         dialog.dismiss()
@@ -125,9 +134,11 @@ class BilibiliStorageEditDialog(
         addNeutralButton("恢复默认") {
             apiPreferences = BilibiliApiPreferences()
             preferences = BilibiliPlaybackPreferences()
+            historySyncMode = BilibiliHistorySyncMode.AUTO
             danmakuBlockPreferences = BilibiliDanmakuBlockPreferences()
             persistAllPreferences()
             refreshPreferenceViews()
+            refreshHistoryStatus(forceRefresh = false)
         }
     }
 
@@ -143,9 +154,16 @@ class BilibiliStorageEditDialog(
     }
 
     private fun isLoggedIn(): Boolean {
-        val storageKey = BilibiliPlaybackPreferencesStore.storageKey(editLibrary)
+        val storageKey = currentStorageKey()
         return BilibiliCookieJarStore(storageKey).isLoginCookiePresent()
     }
+
+    private fun currentStorageKey(): String {
+        normalizeLibraryUrl()
+        return BilibiliPlaybackPreferencesStore.storageKey(editLibrary)
+    }
+
+    private fun buildRepository(): BilibiliRepository = BilibiliRepository(currentStorageKey())
 
     private fun showLoginDialog() {
         normalizeLibraryUrl()
@@ -165,16 +183,20 @@ class BilibiliStorageEditDialog(
                     saveJob.join()
                     binding.disconnectTv.isVisible = (activity.editData?.id ?: editLibrary.id) > 0
                     autoSaveHelper.markSaved(buildLibraryForAutoSave())
+                    refreshHistoryStatus(forceRefresh = true)
                 }
             },
-            onDismiss = { refreshAuthViews() },
+            onDismiss = {
+                refreshAuthViews()
+                refreshHistoryStatus(forceRefresh = false)
+            },
         ).show()
     }
 
     private fun refreshAuthViews() {
         normalizeLibraryUrl()
 
-        val storageKey = BilibiliPlaybackPreferencesStore.storageKey(editLibrary)
+        val storageKey = currentStorageKey()
         val isLoggedIn = BilibiliCookieJarStore(storageKey).isLoginCookiePresent()
         val mid = BilibiliAuthStore.read(storageKey).mid?.takeIf { it > 0L }
 
@@ -194,9 +216,9 @@ class BilibiliStorageEditDialog(
         refreshPreferenceViews()
     }
 
-    private fun updateHeartbeatReport(enabled: Boolean) {
-        preferences = preferences.copy(enableHeartbeatReport = enabled)
-        persistPlaybackPreferences()
+    private fun updateHistorySyncMode(mode: BilibiliHistorySyncMode) {
+        historySyncMode = mode
+        persistHistorySyncPreferences()
         refreshPreferenceViews()
     }
 
@@ -207,7 +229,8 @@ class BilibiliStorageEditDialog(
         binding.codecValueTv.text = preferences.preferredVideoCodec.label
         binding.cdnValueTv.text = preferences.cdnService.label
         setAllow4kSelected(preferences.allow4k)
-        setHeartbeatReportSelected(preferences.enableHeartbeatReport)
+        setHistorySyncSelected(historySyncMode)
+        refreshHistorySyncStatusView()
 
         binding.aiLevelValueTv.text = formatAiLevel(danmakuBlockPreferences.aiLevel)
         setAiBlockSelected(danmakuBlockPreferences.aiSwitch)
@@ -244,12 +267,43 @@ class BilibiliStorageEditDialog(
         binding.allow4kOffTv.setTextColorRes(if (!allow) R.color.text_white else R.color.text_black)
     }
 
-    private fun setHeartbeatReportSelected(enabled: Boolean) {
-        binding.heartbeatOnTv.isSelected = enabled
-        binding.heartbeatOnTv.setTextColorRes(if (enabled) R.color.text_white else R.color.text_black)
+    private fun setHistorySyncSelected(mode: BilibiliHistorySyncMode) {
+        val auto = mode == BilibiliHistorySyncMode.AUTO
+        binding.historySyncAutoTv.isSelected = auto
+        binding.historySyncAutoTv.setTextColorRes(if (auto) R.color.text_white else R.color.text_black)
 
-        binding.heartbeatOffTv.isSelected = !enabled
-        binding.heartbeatOffTv.setTextColorRes(if (!enabled) R.color.text_white else R.color.text_black)
+        binding.historySyncOffTv.isSelected = !auto
+        binding.historySyncOffTv.setTextColorRes(if (!auto) R.color.text_white else R.color.text_black)
+    }
+
+    private fun refreshHistorySyncStatusView(isLoading: Boolean = false) {
+        binding.historySyncStatusTv.text =
+            when {
+                isLoading -> "正在获取 B站历史状态..."
+                !isLoggedIn() -> "登录后将按账号状态自动同步观看历史"
+                historySyncMode == BilibiliHistorySyncMode.DISABLED -> "当前连接已关闭本地历史同步，仅影响本客户端"
+                historyStatus?.isPaused == true -> "B站账号已暂停历史记录，当前不会上报观看进度"
+                historyStatus != null -> "自动模式：将跟随账号状态同步观看历史"
+                else -> "未获取到 B站历史状态，将按本地模式自动处理"
+            }
+        binding.historySyncStatusTv.setTextColorRes(R.color.text_gray)
+    }
+
+    private fun refreshHistoryStatus(forceRefresh: Boolean) {
+        if (!isLoggedIn()) {
+            historyStatus = null
+            refreshHistorySyncStatusView()
+            return
+        }
+
+        historyStatus = buildRepository().history.cachedHistoryStatusOrNull()
+        refreshHistorySyncStatusView(isLoading = forceRefresh && historyStatus == null)
+
+        activity.lifecycleScope.launch {
+            val result = buildRepository().history.historyStatus(forceRefresh = forceRefresh)
+            historyStatus = result.getOrNull()
+            refreshHistorySyncStatusView()
+        }
     }
 
     private fun updateAiBlock(enabled: Boolean) {
@@ -438,6 +492,7 @@ class BilibiliStorageEditDialog(
     private fun persistAllPreferences() {
         persistApiPreferences()
         persistPlaybackPreferences()
+        persistHistorySyncPreferences()
         persistDanmakuPreferences()
     }
 
@@ -447,6 +502,10 @@ class BilibiliStorageEditDialog(
 
     private fun persistPlaybackPreferences() {
         BilibiliPlaybackPreferencesStore.write(editLibrary, preferences)
+    }
+
+    private fun persistHistorySyncPreferences() {
+        BilibiliHistorySyncPreferencesStore.write(editLibrary, historySyncMode)
     }
 
     private fun persistDanmakuPreferences() {

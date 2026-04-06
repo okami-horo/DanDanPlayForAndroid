@@ -1,5 +1,6 @@
 package com.xyoye.common_component.bilibili.repository
 
+import com.xyoye.common_component.bilibili.history.BilibiliHistoryStatus
 import com.xyoye.data_component.data.bilibili.BilibiliHistoryCursorData
 
 class BilibiliHistoryRepository internal constructor(
@@ -21,4 +22,10 @@ class BilibiliHistoryRepository internal constructor(
             type = type,
             preferCache = preferCache,
         )
+
+    suspend fun historyStatus(forceRefresh: Boolean = false): Result<BilibiliHistoryStatus?> =
+        core.historyStatus(forceRefresh)
+
+    fun cachedHistoryStatusOrNull(maxAgeMs: Long? = null): BilibiliHistoryStatus? =
+        core.cachedHistoryStatusOrNull(maxAgeMs)
 }

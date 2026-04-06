@@ -21,6 +21,7 @@ object BilibiliPlaybackPreferencesStore {
     private const val KEY_AUDIO_QUALITY_ID = "audio_quality_id"
     private const val KEY_ALLOW_4K = "allow_4k"
     private const val KEY_CDN_SERVICE = "cdn_service"
+    // legacy：已迁移至 BilibiliHistorySyncPreferencesStore
     private const val KEY_HEARTBEAT_REPORT = "heartbeat_report"
 
     fun storageKey(library: MediaLibraryEntity): String = "${library.mediaType.value}:${library.url.trim().removeSuffix("/")}"
@@ -55,7 +56,6 @@ object BilibiliPlaybackPreferencesStore {
             runCatching {
                 kv.decodeString(namespacedKey(storageKey, KEY_CDN_SERVICE))?.let { BilibiliCdnService.valueOf(it) }
             }.getOrNull() ?: BilibiliCdnService.AUTO
-        val heartbeatReport = kv.decodeBool(namespacedKey(storageKey, KEY_HEARTBEAT_REPORT), false)
 
         return BilibiliPlaybackPreferences(
             playMode = mode,
@@ -64,7 +64,6 @@ object BilibiliPlaybackPreferencesStore {
             preferredAudioQualityId = audioQualityId,
             allow4k = allow4k,
             cdnService = cdnService,
-            enableHeartbeatReport = heartbeatReport,
         )
     }
 
@@ -79,7 +78,6 @@ object BilibiliPlaybackPreferencesStore {
         kv.encode(namespacedKey(storageKey, KEY_AUDIO_QUALITY_ID), preferences.preferredAudioQualityId)
         kv.encode(namespacedKey(storageKey, KEY_ALLOW_4K), preferences.allow4k)
         kv.encode(namespacedKey(storageKey, KEY_CDN_SERVICE), preferences.cdnService.name)
-        kv.encode(namespacedKey(storageKey, KEY_HEARTBEAT_REPORT), preferences.enableHeartbeatReport)
     }
 
     fun clear(storageKey: String) {
@@ -91,6 +89,19 @@ object BilibiliPlaybackPreferencesStore {
         kv.removeValueForKey(namespacedKey(storageKey, KEY_ALLOW_4K))
         kv.removeValueForKey(namespacedKey(storageKey, KEY_CDN_SERVICE))
         kv.removeValueForKey(namespacedKey(storageKey, KEY_HEARTBEAT_REPORT))
+    }
+
+    internal fun readLegacyHeartbeatReportOrNull(storageKey: String): Boolean? {
+        val kv = mmkv()
+        val key = namespacedKey(storageKey, KEY_HEARTBEAT_REPORT)
+        if (!kv.containsKey(key)) {
+            return null
+        }
+        return kv.decodeBool(key, false)
+    }
+
+    internal fun clearLegacyHeartbeatReport(storageKey: String) {
+        mmkv().removeValueForKey(namespacedKey(storageKey, KEY_HEARTBEAT_REPORT))
     }
 
     private fun mmkv(): MMKV = MMKV.mmkvWithID(MMKV_ID)

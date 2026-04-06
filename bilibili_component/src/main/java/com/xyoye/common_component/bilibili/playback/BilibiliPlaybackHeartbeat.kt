@@ -16,7 +16,9 @@ object BilibiliPlaybackHeartbeat {
 
     private data class State(
         var lastSentAtMs: Long = 0L,
-        var lastFailureLogAtMs: Long = 0L
+        var lastFailureLogAtMs: Long = 0L,
+        var lastSkipLogAtMs: Long = 0L,
+        var lastSkipReason: String? = null,
     )
 
     private val states = ConcurrentHashMap<BilibiliPlaybackSessionStore.Key, State>()
@@ -116,6 +118,26 @@ object BilibiliPlaybackHeartbeat {
         state: State
     ) {
         SupervisorScope.IO.launch {
+            val decision = session.heartbeatDecision()
+            if (!decision.allowed) {
+                val skipReason = decision.skipReason?.logLabel.orEmpty()
+                val nowMs = System.currentTimeMillis()
+                if (
+                    skipReason.isNotBlank() &&
+                    (skipReason != state.lastSkipReason || nowMs - state.lastSkipLogAtMs >= failureLogIntervalMs)
+                ) {
+                    state.lastSkipReason = skipReason
+                    state.lastSkipLogAtMs = nowMs
+                    LogFacade.i(
+                        LogModule.NETWORK,
+                        TAG_HEARTBEAT,
+                        "heartbeat skipped storageId=${key.storageId} reason=$skipReason playedTimeSec=$playedTimeSec",
+                    )
+                }
+                return@launch
+            }
+            state.lastSkipReason = null
+
             session
                 .reportPlaybackHeartbeat(playedTimeSec)
                 .onFailure { t ->

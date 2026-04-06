@@ -101,10 +101,14 @@ class BilibiliPlaybackSession(
 
     fun snapshot(): Snapshot? = snapshot
 
+    suspend fun heartbeatDecision(): BilibiliHeartbeatPolicy.Decision =
+        BilibiliHeartbeatPolicy.decide(
+            storageKey = storageKey,
+            key = key,
+            repository = repository,
+        )
+
     suspend fun reportPlaybackHeartbeat(playedTimeSec: Long): Result<Unit> {
-        if (!BilibiliPlaybackPreferencesStore.read(storageKey).enableHeartbeatReport) {
-            return Result.success(Unit)
-        }
         return repository.playbackHeartbeat(
             key = key,
             playedTimeSec = playedTimeSec,

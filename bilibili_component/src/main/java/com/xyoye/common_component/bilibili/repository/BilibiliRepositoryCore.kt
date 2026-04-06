@@ -11,6 +11,8 @@ import com.xyoye.common_component.bilibili.auth.BilibiliAuthStore
 import com.xyoye.common_component.bilibili.auth.BilibiliCookieJarStore
 import com.xyoye.common_component.bilibili.error.BilibiliException
 import com.xyoye.common_component.bilibili.history.BilibiliHistoryCacheStore
+import com.xyoye.common_component.bilibili.history.BilibiliHistoryStatus
+import com.xyoye.common_component.bilibili.history.BilibiliHistoryStatusStore
 import com.xyoye.common_component.bilibili.login.BilibiliLoginPollResult
 import com.xyoye.common_component.bilibili.login.BilibiliLoginQrCode
 import com.xyoye.common_component.bilibili.net.BilibiliOkHttpClientFactory
@@ -19,6 +21,8 @@ import com.xyoye.common_component.bilibili.risk.BilibiliRiskStateStore
 import com.xyoye.common_component.bilibili.ticket.BilibiliTicketSigner
 import com.xyoye.common_component.bilibili.wbi.BilibiliWbiSigner
 import com.xyoye.common_component.extension.toMd5String
+import com.xyoye.common_component.log.LogFacade
+import com.xyoye.common_component.log.model.LogModule
 import com.xyoye.common_component.network.RetrofitManager
 import com.xyoye.common_component.network.config.Api
 import com.xyoye.common_component.network.repository.BaseRepository
@@ -71,11 +75,15 @@ internal class BilibiliRepositoryCore(
     }
     private val cookieJarStore by lazy { BilibiliCookieJarStore(storageKey) }
     private val historyCacheStore by lazy { BilibiliHistoryCacheStore(storageKey) }
+    private val historyStatusStore by lazy { BilibiliHistoryStatusStore(storageKey) }
     private val riskStateStore by lazy { BilibiliRiskStateStore(storageKey) }
 
     private val cookieRefreshMutex = Mutex()
     private var lastCookieInfoCheckAt: Long = 0L
     private var lastCookieRefreshAttemptAt: Long = 0L
+
+    private val historyStatusMutex = Mutex()
+    private var lastHistoryStatusAttemptAt: Long = 0L
 
     private val biliTicketMutex = Mutex()
     private var lastBiliTicketAttemptAt: Long = 0L
@@ -518,6 +526,65 @@ internal class BilibiliRepositoryCore(
             }
         }
     }
+
+    fun cachedHistoryStatusOrNull(maxAgeMs: Long? = null): BilibiliHistoryStatus? {
+        val now = System.currentTimeMillis()
+        return if (maxAgeMs == null) {
+            historyStatusStore.readLatestOrNull()
+        } else {
+            historyStatusStore.readFreshOrNull(maxAgeMs = maxAgeMs, nowMs = now)
+        }
+    }
+
+    suspend fun historyStatus(forceRefresh: Boolean = false): Result<BilibiliHistoryStatus?> =
+        historyStatusMutex.withLock {
+            val now = System.currentTimeMillis()
+            val latest = historyStatusStore.readLatestOrNull()
+            if (!forceRefresh) {
+                historyStatusStore.readFreshOrNull(HISTORY_STATUS_CACHE_MAX_AGE_MS, now)?.let {
+                    return@withLock Result.success(it)
+                }
+            }
+
+            val csrfAvailable = BilibiliAuthStore.read(storageKey).csrf?.isNotBlank() == true
+            if (!isLoggedIn() || !csrfAvailable) {
+                return@withLock Result.success(latest)
+            }
+
+            if (!forceRefresh && now - lastHistoryStatusAttemptAt < HISTORY_STATUS_MIN_RETRY_INTERVAL_MS) {
+                return@withLock Result.success(latest)
+            }
+            lastHistoryStatusAttemptAt = now
+
+            val refreshed: Result<BilibiliHistoryStatus?> =
+                requestBilibiliAuthed(reason = "historyStatus") {
+                    service.historyStatus(BASE_API)
+                }.map { isPaused ->
+                    historyStatusStore.write(
+                        isPaused = isPaused,
+                        nowMs = now,
+                    )
+                }
+
+            refreshed.onFailure { throwable ->
+                if (latest == null) {
+                    LogFacade.w(
+                        module = LogModule.NETWORK,
+                        tag = TAG_HISTORY_STATUS,
+                        message = "history status unavailable, using local policy only storageKey=$storageKey",
+                        throwable = throwable,
+                    )
+                }
+            }
+
+            latest?.let {
+                if (refreshed.isFailure) {
+                    return@withLock Result.success(it)
+                }
+            }
+
+            refreshed
+        }
 
     suspend fun liveFollow(
         page: Int,
@@ -1196,6 +1263,7 @@ internal class BilibiliRepositoryCore(
         cookieJarStore.clear()
         BilibiliAuthStore.clear(storageKey)
         historyCacheStore.clear()
+        historyStatusStore.clear()
     }
 
     internal fun currentApiType(): BilibiliApiType = BilibiliApiPreferencesStore.read(storageKey).apiType
@@ -1661,6 +1729,9 @@ internal class BilibiliRepositoryCore(
         private const val COOKIE_INFO_CHECK_INTERVAL_MS = 20 * 60 * 60 * 1000L
         private const val COOKIE_REFRESH_MIN_INTERVAL_MS = 2 * 60 * 1000L
         private const val HISTORY_FIRST_PAGE_CACHE_MAX_AGE_MS = 5 * 60 * 1000L
+        private const val HISTORY_STATUS_CACHE_MAX_AGE_MS = 5 * 60 * 1000L
+        private const val HISTORY_STATUS_MIN_RETRY_INTERVAL_MS = 60 * 1000L
+        private const val TAG_HISTORY_STATUS = "bilibili_history_status"
 
         private const val COOKIE_BILI_TICKET = "bili_ticket"
         private const val BILI_TICKET_DEFAULT_TTL_SEC = 259200L
